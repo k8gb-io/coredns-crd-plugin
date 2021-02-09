@@ -1,0 +1,33 @@
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: coredns-test 
+  labels:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: host1.example.org 
+    recordType: A
+    targets:
+    - 1.2.3.4 
+    - 2.3.4.6
+    - 7.8.9.1
+  - dnsName: host2.example.org 
+    recordType: A
+    targets:
+    - 4.3.2.1 
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: black-list 
+spec:
+  endpoints:
+  - dnsName: host3.example.org 
+    recordType: A
+    targets:
+    - 1.2.3.4 
+  - dnsName: host4.example.org 
+    recordType: A
+    targets:
+    - 4.3.2.1 

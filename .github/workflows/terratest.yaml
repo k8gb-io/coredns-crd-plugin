@@ -1,0 +1,24 @@
+name: Terratest
+
+on:
+  pull_request:
+
+jobs:
+  terratest:
+    runs-on: ubuntu-latest
+    env:
+      TAG: "ci"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: k3d
+        uses: AbsaOSS/k3d-action@v1.1.0
+        with:
+          cluster-name: "coredns-crd"
+          args: >-
+            -p "1053:30053/udp@server[0]"
+            --no-lb
+            --k3s-server-arg "--no-deploy=traefik,servicelb,metrics-server"
+      - name: test
+        run: |
+          make terratest

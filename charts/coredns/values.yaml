@@ -1,0 +1,42 @@
+service:
+  type: NodePort
+  nodePort: 30053
+  port: 1053
+  targetPort: 53
+  proto: UDP
+coredns:
+  isClusterService: false
+  image:
+    repository: absaoss/k8s_crd
+    tag: "latest"
+  serviceAccount:
+    create: true
+    name: coredns
+  rbac:
+    create: false
+  servers:
+  - zones:
+    - zone: .
+      scheme: dns:// 
+    port: 53
+    plugins:
+    - name: cache
+      parameters: 30
+    - name: errors
+    # Serves a /health endpoint on :8080, required for livenessProbe
+    - name: health
+    # Serves a /ready endpoint on :8181, required for readinessProbe
+    - name: ready
+    - name: loadbalance
+      parameters: round_robin
+    # Serves a /metrics endpoint on :9153, required for serviceMonitor
+    - name: prometheus
+      parameters: 0.0.0.0:9153
+    - name: forward
+      parameters: . /etc/resolv.conf
+    - name: k8s_crd 
+      parameters: .
+      configBlock: |-
+        resources DNSEndpoint
+        apex dns1
+        filter k8gb.absa.oss/dnstype=local 
