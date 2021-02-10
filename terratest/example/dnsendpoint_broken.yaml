@@ -1,0 +1,26 @@
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: coredns-broken1
+  labels:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: broken1.example.org 
+    recordType: B
+    targets:
+    - 1.2.3.4.5 
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: coredns-broken2 
+  labels:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: broken2.example.org 
+    recordType: A
+    targets:
+    - ''  
+

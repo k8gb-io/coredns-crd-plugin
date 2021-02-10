@@ -1,0 +1,24 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "coredns.fullname" . }}
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    app.kubernetes.io/name: {{ template "coredns.name" . }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - externaldns.k8s.io
+  resources:
+  - dnsendpoints 
+  verbs:
+  - list
+  - watch
