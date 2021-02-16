@@ -1,14 +1,9 @@
-service:
-  type: NodePort
-  nodePort: 30053
-  port: 1053
-  targetPort: 53
-  proto: UDP
 coredns:
   isClusterService: false
   image:
     repository: absaoss/k8s_crd
     tag: "latest"
+  serviceType: LoadBalancer
   serviceAccount:
     create: true
     name: coredns
