@@ -26,8 +26,8 @@ image:
 	docker build . -t ${IMG}:${TAG}
 
 create-local-cluster:
-	k3d cluster create coredns-crd -p "1053:30053/udp@server[0]" \
-        --no-lb --k3s-server-arg "--no-deploy=traefik,servicelb,metrics-server"
+	k3d cluster create coredns-crd -p "1053:53/udp@loadbalancer" \
+        --k3s-server-arg "--no-deploy=traefik,metrics-server"
 
 import-image:
 	k3d image import -c coredns-crd absaoss/k8s_crd:${TAG}
