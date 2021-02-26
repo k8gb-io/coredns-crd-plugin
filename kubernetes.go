@@ -86,9 +86,9 @@ func (ctrl *KubeController) HasSynced() bool {
 func RunKubeController(ctx context.Context, c *Gateway) (*KubeController, error) {
 	config, err := rest.InClusterConfig()
 
-	//      Helpful to run coredns locally
-	//        kubeconfig := os.Getenv("KUBECONFIG")
-	//	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	//Helpful to run coredns locally
+	//kubeconfig := os.Getenv("KUBECONFIG")
+	//config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 
 	if err != nil {
 		return nil, err
@@ -140,10 +140,11 @@ func endpointHostnameIndexFunc(obj interface{}) ([]string, error) {
 	return hostnames, nil
 }
 
-func fetchEndpointIPs(endpoints []*endpoint.Endpoint, host string) (results []net.IP) {
+func fetchEndpointIPs(endpoints []*endpoint.Endpoint, host string) (results []net.IP, ttl endpoint.TTL) {
 	for _, ep := range endpoints {
 		if ep.DNSName == host {
 			results = extractEndpointIPs(ep)
+			ttl = ep.RecordTTL
 		}
 	}
 	return
@@ -156,13 +157,13 @@ func extractEndpointIPs(endpoint *endpoint.Endpoint) (result []net.IP) {
 	return
 }
 
-func lookupEndpointIndex(ctrl cache.SharedIndexInformer) func(string) []net.IP {
-	return func(indexKey string) (result []net.IP) {
+func lookupEndpointIndex(ctrl cache.SharedIndexInformer) func(string) ([]net.IP, endpoint.TTL) {
+	return func(indexKey string) (result []net.IP, ttl endpoint.TTL) {
 
 		objs, _ := ctrl.GetIndexer().ByIndex(endpointHostnameIndex, strings.ToLower(indexKey))
 		for _, obj := range objs {
 			endpoint := obj.(*endpoint.DNSEndpoint)
-			result = fetchEndpointIPs(endpoint.Spec.Endpoints, indexKey)
+			result, ttl = fetchEndpointIPs(endpoint.Spec.Endpoints, indexKey)
 		}
 		return
 	}

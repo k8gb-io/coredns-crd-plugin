@@ -10,11 +10,12 @@ import (
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
+	"sigs.k8s.io/external-dns/endpoint"
 )
 
 const defaultSvc = "external-dns.kube-system"
 
-type lookupFunc func(indexKey string) []net.IP
+type lookupFunc func(indexKey string) ([]net.IP, endpoint.TTL)
 
 type resourceWithIndex struct {
 	name   string
@@ -117,11 +118,12 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 	}
 
 	var addrs []net.IP
+	var ttl endpoint.TTL
 
 	// Iterate over supported resources and lookup DNS queries
 	// Stop once we've found at least one match
 	for _, resource := range gw.Resources {
-		addrs = resource.lookup(indexKey)
+		addrs, ttl = resource.lookup(indexKey)
 		if len(addrs) > 0 {
 			break
 		}
@@ -142,7 +144,7 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 
 	switch state.QType() {
 	case dns.TypeA:
-		m.Answer = gw.A(state, addrs)
+		m.Answer = gw.A(state, addrs, ttl)
 	default:
 		m.Ns = []dns.RR{gw.soa(state)}
 	}
@@ -162,12 +164,15 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 func (gw *Gateway) Name() string { return thisPlugin }
 
 // A does the A-record lookup in ingress indexer
-func (gw *Gateway) A(state request.Request, results []net.IP) (records []dns.RR) {
+func (gw *Gateway) A(state request.Request, results []net.IP, ttl endpoint.TTL) (records []dns.RR) {
 	dup := make(map[string]struct{})
+	if !ttl.IsConfigured() {
+		ttl = endpoint.TTL(gw.ttlLow)
+	}
 	for _, result := range results {
 		if _, ok := dup[result.String()]; !ok {
 			dup[result.String()] = struct{}{}
-			records = append(records, &dns.A{Hdr: dns.RR_Header{Name: state.Name(), Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: gw.ttlLow}, A: result})
+			records = append(records, &dns.A{Hdr: dns.RR_Header{Name: state.Name(), Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: uint32(ttl)}, A: result})
 		}
 	}
 	return records
@@ -186,8 +191,9 @@ func (gw *Gateway) SelfAddress(state request.Request) (records []dns.RR) {
 	}
 
 	var addrs []net.IP
+	var ttl endpoint.TTL
 	for _, resource := range gw.Resources {
-		addrs = resource.lookup(index)
+		addrs, ttl = resource.lookup(index)
 		if len(addrs) > 0 {
 			break
 		}
@@ -195,7 +201,7 @@ func (gw *Gateway) SelfAddress(state request.Request) (records []dns.RR) {
 
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
-	return gw.A(state, addrs)
+	return gw.A(state, addrs, ttl)
 }
 
 // Strips the closing dot unless it's "."
