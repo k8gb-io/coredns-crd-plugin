@@ -27,7 +27,7 @@ dockers:
   build_flag_templates:
   - "--platform=linux/arm64"
 docker_manifests:
-- name_template: absaoss/k8s_crd:{{ .Version }}
+- name_template: absaoss/k8s_crd:{{ .Tag }}
   image_templates:
   - absaoss/k8s_crd:{{ .Tag }}-amd64
   - absaoss/k8s_crd:{{ .Tag }}-arm64
