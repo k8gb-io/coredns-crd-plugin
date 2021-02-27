@@ -1,0 +1,43 @@
+before:
+  hooks:
+    - go mod download
+builds:
+  - env:
+      - CGO_ENABLED=0
+    id: coredns
+    main: ./cmd/coredns.go
+    binary: coredns
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+dockers:
+- image_templates:
+  - "absaoss/k8s_crd:{{ .Tag }}-amd64"
+  use_buildx: false
+  dockerfile: Dockerfile
+  build_flag_templates:
+  - "--platform=linux/amd64"
+- image_templates:
+  - "absaoss/k8s_crd:{{ .Tag }}-arm64"
+  use_buildx: false
+  goarch: arm64
+  dockerfile: Dockerfile
+  build_flag_templates:
+  - "--platform=linux/arm64"
+docker_manifests:
+- name_template: absaoss/k8s_crd:{{ .Version }}
+  image_templates:
+  - absaoss/k8s_crd:{{ .Tag }}-amd64
+  - absaoss/k8s_crd:{{ .Tag }}-arm64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
