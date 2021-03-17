@@ -1,0 +1,9 @@
+# Ignore everything
+*
+
+# But not these files...
+!Makefile
+!*.go
+
+# ...even if they are in subdirectories
+!*/
