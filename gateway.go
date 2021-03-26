@@ -162,6 +162,9 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 	switch state.QType() {
 	case dns.TypeA:
 		m.Answer = gw.A(state, addrs, ttl)
+	case dns.TypeAAAA:
+		m.Ns = []dns.RR{gw.soa(state)}
+		m.Rcode = dns.RcodeNameError
 	default:
 		m.Ns = []dns.RR{gw.soa(state)}
 	}
