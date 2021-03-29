@@ -20,12 +20,11 @@ jobs:
       - name: build image
         run: make image
       - name: k3d
-        uses: AbsaOSS/k3d-action@v1.2.0
+        uses: AbsaOSS/k3d-action@v1.3.1
         with:
           cluster-name: "coredns-crd"
           args: >-
-            -p "1053:53/udp@loadbalancer"
-            --k3s-server-arg "--no-deploy=traefik,metrics-server"
+            --config=k3d-cluster.yaml
       - name: test
         run: |
           make terratest
