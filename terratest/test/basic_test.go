@@ -26,13 +26,12 @@ import (
 
 	"github.com/gruntwork-io/terratest/modules/k8s"
 	"github.com/gruntwork-io/terratest/modules/random"
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-const mallformedPacket = ";; Warning: Message parser reports malformed message packet."
 
 func TestBasicExample(t *testing.T) {
 	t.Parallel()
@@ -41,6 +40,8 @@ func TestBasicExample(t *testing.T) {
 
 	// Path to the Kubernetes resource config we will test
 	kubeResourcePath, err := filepath.Abs("../example/dnsendpoint.yaml")
+	require.NoError(t, err)
+	ttlEndpoint, err := filepath.Abs("../example/dnsendpoint_ttl.yaml")
 	require.NoError(t, err)
 	brokenEndpoint, err := filepath.Abs("../example/dnsendpoint_broken.yaml")
 	require.NoError(t, err)
@@ -71,21 +72,55 @@ func TestBasicExample(t *testing.T) {
 	for _, pod := range coreDNSPods {
 		k8s.WaitUntilPodAvailable(t, mainNsOptions, pod.Name, 60, 1*time.Second)
 	}
-	actualIP, _ := Dig(t, "localhost", 1053, "host1.example.org")
 
-	assert.Contains(t, actualIP, "1.2.3.4")
+	t.Run("Basic type A resolve", func(t *testing.T) {
+		actualIP, err := DigIPs(t, "localhost", 1053, "host1.example.org", dns.TypeA)
+		t.Logf("Error: %s", err.Error())
+		assert.Nil(t, err)
+		assert.Contains(t, actualIP, "1.2.3.4")
+	})
 
 	// check for NODATA replay on non labeled endpoints
-	emptyIP, _ := Dig(t, "localhost", 1053, "host3.example.org")
-	assert.NotContains(t, emptyIP, "1.2.3.4")
+	t.Run("NODATA reply on non labeled endpoints", func(t *testing.T) {
+		emptyIP, _ := DigIPs(t, "localhost", 1053, "host3.example.org", dns.TypeA)
+		assert.NotContains(t, emptyIP, "1.2.3.4")
+	})
 
-	// Validate artificial(broken) DNS doesn't break CoreDNS
-	k8s.KubectlApply(t, options, brokenEndpoint)
-	brokenData1, _ := Dig(t, "localhost", 1053, "broken1.example.org")
-	assert.Contains(t, brokenData1, mallformedPacket)
-	brokenData2, _ := Dig(t, "localhost", 1053, "broken2.example.org")
-	assert.Contains(t, brokenData2, mallformedPacket)
-	// We still able to get "healthy" records
-	currentIP, _ := Dig(t, "localhost", 1053, "host1.example.org")
-	assert.Contains(t, currentIP, "1.2.3.4")
+	output, err := k8s.RunKubectlAndGetOutputE(t, mainNsOptions, "logs", "-l", "app.kubernetes.io/name=coredns")
+	t.Log("Log:\n", output)
+	t.Run("Validate artificial(broken) DNS doesn't break CoreDN", func(t *testing.T) {
+		k8s.KubectlApply(t, options, brokenEndpoint)
+		brokenData1, _ := DigIPs(t, "localhost", 1053, "broken1.example.org", dns.TypeA)
+		assert.Equal(t, len(brokenData1), 0)
+		brokenData2, _ := DigIPs(t, "localhost", 1053, "broken2.example.org", dns.TypeA)
+		assert.Equal(t, len(brokenData2), 0)
+
+		// We still able to get "healthy" records
+		currentIP, _ := DigIPs(t, "localhost", 1053, "host1.example.org", dns.TypeA)
+		t.Logf("Debug %+v", currentIP)
+		assert.Contains(t, currentIP, "1.2.3.4")
+	})
+	pods, err := k8s.RunKubectlAndGetOutputE(t, mainNsOptions, "get", "po")
+	t.Logf("Pods in coredns: %+v", pods)
+
+	t.Run("TTL is correctly evaluated", func(t *testing.T) {
+		k8s.KubectlApply(t, options, ttlEndpoint)
+		msg, err := DigMsg(t, "localhost", 1053, "ttl.example.org", dns.TypeA)
+
+		t.Logf("Debug TTL %+v", msg)
+		assert.NoError(t, err)
+		assert.Equal(t, uint32(123), msg.Answer[0].(*dns.A).Hdr.Ttl)
+	})
+
+	t.Run("Type AAAA returns Rcode 3", func(t *testing.T) {
+		msg, err := DigMsg(t, "localhost", 1053, "host1.example.org", dns.TypeAAAA)
+		assert.NoError(t, err)
+		assert.Equal(t, dns.RcodeNameError, msg.Rcode)
+	})
+	t.Run("Type AAAA returns Rcode 3", func(t *testing.T) {
+		msg, err := DigMsg(t, "localhost", 1053, "host1.example.org", dns.TypeAAAA)
+		assert.NoError(t, err)
+		assert.Equal(t, dns.RcodeNameError, msg.Rcode)
+	})
+
 }

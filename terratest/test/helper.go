@@ -19,26 +19,54 @@ package test
 
 import (
 	"fmt"
-	"sort"
-	"strings"
 	"testing"
+	"time"
 
-	"github.com/gruntwork-io/terratest/modules/shell"
+	"github.com/miekg/dns"
 )
 
-func Dig(t *testing.T, dnsServer string, dnsPort int, dnsName string) ([]string, error) {
-	port := fmt.Sprintf("-p%v", dnsPort)
-	dnsServer = fmt.Sprintf("@%s", dnsServer)
+const (
+	DefaultTimeout time.Duration = 5 * time.Second
+)
 
-	digApp := shell.Command{
-		Command: "dig",
-		Args:    []string{port, dnsServer, dnsName, "+short"},
+func queryDNS(dnsServer string, dnsPort int, dnsName string, dnsType uint16) (*dns.Msg, error) {
+	dnsName = fmt.Sprintf("%s.", dnsName)
+	m := &dns.Msg{
+		MsgHdr: dns.MsgHdr{
+			RecursionDesired: true,
+		},
+		Question: make([]dns.Question, 1),
+	}
+	c := &dns.Client{
+		ReadTimeout: DefaultTimeout,
+	}
+	c.Net = "udp4"
+	m.SetQuestion(dnsName, dnsType)
+	r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", dnsServer, dnsPort))
+	return r, err
+}
+
+func DigMsg(t *testing.T, dnsServer string, dnsPort int, dnsName string, dnsType uint16) (*dns.Msg, error) {
+	t.Logf("Address to dial %s", fmt.Sprintf("%s:%d", dnsServer, dnsPort))
+	return queryDNS(dnsServer, dnsPort, dnsName, dnsType)
+}
+
+func DigIPs(t *testing.T, dnsServer string, dnsPort int, dnsName string, dnsType uint16) ([]string, error) {
+	t.Logf("Address to dial %s", fmt.Sprintf("%s:%d", dnsServer, dnsPort))
+	var result []string
+	r, err := queryDNS(dnsServer, dnsPort, dnsName, dnsType)
+
+	if err != nil {
+		return nil, err
 	}
 
-	digAppOut := shell.RunCommandAndGetOutput(t, digApp)
-	digAppSlice := strings.Split(digAppOut, "\n")
-
-	sort.Strings(digAppSlice)
-
-	return digAppSlice, nil
+	for _, record := range r.Answer {
+		if e, ok := record.(*dns.A); ok {
+			if e.A != nil {
+				t.Logf("Addr: %s", e.A.String())
+				result = append(result, e.A.String())
+			}
+		}
+	}
+	return result, nil
 }

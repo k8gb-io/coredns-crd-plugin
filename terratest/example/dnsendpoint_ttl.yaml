@@ -1,0 +1,13 @@
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: coredns-ttl
+  labels:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: ttl.example.org 
+    recordType: A
+    recordTTL: 123
+    targets:
+    - 1.2.3.4 
