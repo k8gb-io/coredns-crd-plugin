@@ -103,7 +103,7 @@ func (ctrl *KubeController) HasSynced() bool {
 func RunKubeController(ctx context.Context, c *Gateway) (*KubeController, error) {
 	config, err := rest.InClusterConfig()
 
-	//Helpful to run coredns locally
+	// Helpful to run coredns locally
 	//kubeconfig := os.Getenv("KUBECONFIG")
 	//config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 
