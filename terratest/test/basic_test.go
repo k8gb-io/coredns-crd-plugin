@@ -107,9 +107,16 @@ func TestBasicExample(t *testing.T) {
 		assert.Equal(t, uint32(123), msg.Answer[0].(*dns.A).Hdr.Ttl)
 	})
 
-	t.Run("Type AAAA returns Rcode 3", func(t *testing.T) {
+	t.Run("Type AAAA returns Rcode 0", func(t *testing.T) {
 		msg, err := DigMsg(t, "localhost", 1053, "host1.example.org", dns.TypeAAAA)
 		require.NoError(t, err)
+		assert.Equal(t, dns.RcodeSuccess, msg.Rcode)
+		assert.Equal(t, 0, len(msg.Answer))
+	})
+	t.Run("Type AAAA returns Rcode 3 for non existing host", func(t *testing.T) {
+		msg, err := DigMsg(t, "localhost", 1053, "nonexistent.example.org", dns.TypeAAAA)
+		require.NoError(t, err)
 		assert.Equal(t, dns.RcodeNameError, msg.Rcode)
+		assert.Equal(t, 0, len(msg.Answer))
 	})
 }
