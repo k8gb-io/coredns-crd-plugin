@@ -28,7 +28,7 @@ coredns:
     - name: forward
       parameters: . /etc/resolv.conf
     - name: k8s_crd 
-      parameters: .
+      parameters: example.org
       configBlock: |-
         resources DNSEndpoint
         apex dns1
