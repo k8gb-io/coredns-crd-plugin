@@ -38,6 +38,7 @@ func TestBasicExample(t *testing.T) {
 
 	var coreDNSPods []corev1.Pod
 
+	clientIP := "127.0.0.1"
 	// Path to the Kubernetes resource config we will test
 	kubeResourcePath, err := filepath.Abs("../example/dnsendpoint.yaml")
 	require.NoError(t, err)
@@ -74,27 +75,27 @@ func TestBasicExample(t *testing.T) {
 	}
 
 	t.Run("Basic type A resolve", func(t *testing.T) {
-		actualIP, err := DigIPs(t, "localhost", 1053, "host1.example.org", dns.TypeA)
+		actualIP, err := DigIPs(t, "localhost", 1053, "host1.example.org", dns.TypeA, clientIP)
 		require.NoError(t, err)
 		assert.Contains(t, actualIP, "1.2.3.4")
 	})
 
 	// check for NODATA replay on non labeled endpoints
 	t.Run("NODATA reply on non labeled endpoints", func(t *testing.T) {
-		emptyIP, err := DigIPs(t, "localhost", 1053, "host3.example.org", dns.TypeA)
+		emptyIP, err := DigIPs(t, "localhost", 1053, "host3.example.org", dns.TypeA, clientIP)
 		require.NoError(t, err)
 		assert.NotContains(t, emptyIP, "1.2.3.4")
 	})
 
 	t.Run("Validate artificial(broken) DNS doesn't break CoreDNS", func(t *testing.T) {
 		k8s.KubectlApply(t, options, brokenEndpoint)
-		_, err := DigIPs(t, "localhost", 1053, "broken1.example.org", dns.TypeA)
+		_, err := DigIPs(t, "localhost", 1053, "broken1.example.org", dns.TypeA, clientIP)
 		require.Error(t, err)
-		_, err = DigIPs(t, "localhost", 1053, "broken2.example.org", dns.TypeA)
+		_, err = DigIPs(t, "localhost", 1053, "broken2.example.org", dns.TypeA, clientIP)
 		require.Error(t, err)
 
 		// We still able to get "healthy" records
-		currentIP, err := DigIPs(t, "localhost", 1053, "host1.example.org", dns.TypeA)
+		currentIP, err := DigIPs(t, "localhost", 1053, "host1.example.org", dns.TypeA, clientIP)
 		require.NoError(t, err)
 		assert.Contains(t, currentIP, "1.2.3.4")
 	})
