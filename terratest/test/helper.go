@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"testing"
 	"time"
+	"net"
 
 	"github.com/miekg/dns"
 )
@@ -30,8 +31,10 @@ const (
 	DefaultTimeout time.Duration = 5 * time.Second
 )
 
-func queryDNS(dnsServer string, dnsPort int, dnsName string, dnsType uint16) (*dns.Msg, error) {
+
+func queryDNS(dnsServer string, dnsPort int, dnsName string, dnsType uint16, clientIP string) (*dns.Msg, error) {
 	dnsName = fmt.Sprintf("%s.", dnsName)
+	ip := net.ParseIP(clientIP)
 	m := &dns.Msg{
 		MsgHdr: dns.MsgHdr{
 			RecursionDesired: true,
@@ -41,19 +44,39 @@ func queryDNS(dnsServer string, dnsPort int, dnsName string, dnsType uint16) (*d
 	c := &dns.Client{
 		ReadTimeout: DefaultTimeout,
 	}
+	if clientIP != "" {
+		o := &dns.OPT{
+			Hdr: dns.RR_Header{
+				Name:   ".",
+				Rrtype: dns.TypeOPT,
+			},
+		}
+		e := &dns.EDNS0_SUBNET{
+			Code:          dns.EDNS0SUBNET,
+			Address:       ip,
+			Family:        1, // IP4
+			SourceNetmask: net.IPv4len * 8,
+		}
+		o.Option = append(o.Option, e)
+		m.Extra = append(m.Extra, o)
+	}
 	c.Net = "udp4"
+	c.Dialer = &net.Dialer{}
+
 	m.SetQuestion(dnsName, dnsType)
 	r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", dnsServer, dnsPort))
+
 	return r, err
 }
 
 func DigMsg(t *testing.T, dnsServer string, dnsPort int, dnsName string, dnsType uint16) (*dns.Msg, error) {
-	return queryDNS(dnsServer, dnsPort, dnsName, dnsType)
+	clientIP := ""
+	return queryDNS(dnsServer, dnsPort, dnsName, dnsType, clientIP)
 }
 
-func DigIPs(t *testing.T, dnsServer string, dnsPort int, dnsName string, dnsType uint16) ([]string, error) {
+func DigIPs(t *testing.T, dnsServer string, dnsPort int, dnsName string, dnsType uint16, clientIP string) ([]string, error) {
 	var result []string
-	r, err := queryDNS(dnsServer, dnsPort, dnsName, dnsType)
+	r, err := queryDNS(dnsServer, dnsPort, dnsName, dnsType, clientIP)
 
 	if err != nil {
 		return nil, err

@@ -48,7 +48,7 @@ lint:
 	golangci-lint run
 
 build:
-	CGO_ENABLED=0 go build cmd/coredns.go
+	GOOS=linux CGO_ENABLED=0 go build cmd/coredns.go
 
 clean:
 	go clean
@@ -64,13 +64,16 @@ import-image:
 	k3d image import -c coredns-crd absaoss/k8s_crd:${TAG}
 
 deploy-app: image import-image
+#deploy-app:
 	kubectl config use-context k3d-coredns-crd
 	kubectl apply -f terratest/example/ns.yaml 
+	kubectl create -n coredns configmap geodata --from-file terratest/geo/geoip.mmdb || true
 	kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/external-dns/master/docs/contributing/crd-source/crd-manifest.yaml
 	helm repo add coredns https://coredns.github.io/helm
 	helm repo update
 	cd charts/coredns && helm dependency update
 	helm upgrade -i coredns -n coredns charts/coredns \
+		-f terratest/helm_values.yaml \
 		--set coredns.image.tag=${TAG}
 
 .PHONY: lincense

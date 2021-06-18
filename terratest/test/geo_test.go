@@ -33,18 +33,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestBasicExample(t *testing.T) {
+func TestGeo(t *testing.T) {
 	t.Parallel()
 
 	var coreDNSPods []corev1.Pod
 
-	clientIP := ""
 	// Path to the Kubernetes resource config we will test
-	kubeResourcePath, err := filepath.Abs("../example/dnsendpoint.yaml")
-	require.NoError(t, err)
-	ttlEndpoint, err := filepath.Abs("../example/dnsendpoint_ttl.yaml")
-	require.NoError(t, err)
-	brokenEndpoint, err := filepath.Abs("../example/dnsendpoint_broken.yaml")
+	kubeResourcePath, err := filepath.Abs("../example/geo.yaml")
 	require.NoError(t, err)
 
 	// To ensure we can reuse the resource config on the same cluster to test different scenarios, we setup a unique
@@ -74,50 +69,22 @@ func TestBasicExample(t *testing.T) {
 		k8s.WaitUntilPodAvailable(t, mainNsOptions, pod.Name, 60, 1*time.Second)
 	}
 
-	t.Run("Basic type A resolve", func(t *testing.T) {
-		actualIP, err := DigIPs(t, "localhost", 1053, "host1.example.org", dns.TypeA, clientIP)
+	t.Run("site1 gets site1 endpoints", func(t *testing.T) {
+		clientIP := "192.200.1.50"
+		actualIP, err := DigIPs(t, "localhost", 1053, "geo.example.org", dns.TypeA, clientIP)
 		require.NoError(t, err)
-		assert.Contains(t, actualIP, "1.2.3.4")
+		assert.NotContains(t, actualIP, "192.200.2.10")
 	})
-
-	// check for NODATA replay on non labeled endpoints
-	t.Run("NODATA reply on non labeled endpoints", func(t *testing.T) {
-		emptyIP, err := DigIPs(t, "localhost", 1053, "host3.example.org", dns.TypeA, clientIP)
+	t.Run("site2 gets site2 endpoints", func(t *testing.T) {
+		clientIP := "192.200.2.30"
+		actualIP, err := DigIPs(t, "localhost", 1053, "geo.example.org", dns.TypeA, clientIP)
 		require.NoError(t, err)
-		assert.NotContains(t, emptyIP, "1.2.3.4")
+		assert.NotContains(t, actualIP, "192.200.1.5")
 	})
-
-	t.Run("Validate artificial(broken) DNS doesn't break CoreDNS", func(t *testing.T) {
-		k8s.KubectlApply(t, options, brokenEndpoint)
-		_, err := DigIPs(t, "localhost", 1053, "broken1.example.org", dns.TypeA, clientIP)
-		require.Error(t, err)
-		_, err = DigIPs(t, "localhost", 1053, "broken2.example.org", dns.TypeA, clientIP)
-		require.Error(t, err)
-
-		// We still able to get "healthy" records
-		currentIP, err := DigIPs(t, "localhost", 1053, "host1.example.org", dns.TypeA, clientIP)
+	t.Run("outside DC client gets all endpoints", func(t *testing.T) {
+		clientIP := "192.100.1.15"
+		actualIP, err := DigIPs(t, "localhost", 1053, "geo.example.org", dns.TypeA, clientIP)
 		require.NoError(t, err)
-		assert.Contains(t, currentIP, "1.2.3.4")
-	})
-
-	t.Run("TTL is correctly evaluated", func(t *testing.T) {
-		k8s.KubectlApply(t, options, ttlEndpoint)
-		msg, err := DigMsg(t, "localhost", 1053, "ttl.example.org", dns.TypeA)
-
-		require.NoError(t, err)
-		assert.Equal(t, uint32(123), msg.Answer[0].(*dns.A).Hdr.Ttl)
-	})
-
-	t.Run("Type AAAA returns Rcode 0", func(t *testing.T) {
-		msg, err := DigMsg(t, "localhost", 1053, "host1.example.org", dns.TypeAAAA)
-		require.NoError(t, err)
-		assert.Equal(t, dns.RcodeSuccess, msg.Rcode)
-		assert.Equal(t, 0, len(msg.Answer))
-	})
-	t.Run("Type AAAA returns Rcode 3 for non existing host", func(t *testing.T) {
-		msg, err := DigMsg(t, "localhost", 1053, "nonexistent.example.org", dns.TypeAAAA)
-		require.NoError(t, err)
-		assert.Equal(t, dns.RcodeNameError, msg.Rcode)
-		assert.Equal(t, 0, len(msg.Answer))
+		assert.Equal(t, len(actualIP), 4)
 	})
 }

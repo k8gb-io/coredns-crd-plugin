@@ -1,0 +1,17 @@
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: geo-test
+  labels:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: geo.example.org
+    recordType: A
+    labels:
+      strategy: "geoip"
+    targets:
+    - 192.200.1.5
+    - 192.200.1.10
+    - 192.200.2.5
+    - 192.200.2.10

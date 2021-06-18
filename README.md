@@ -43,6 +43,14 @@ k8s_crd example.com {
 }
 ```
 
+## Resolving order
+In case dnsendpoint object's target have label `strategy: geoip` CoreDNS k8s_crd plugin will respond in a special way:
+* assuming record have multiple IPs associated with it, and dns Message comes with edns0 CLIENT-SUBNET option.
+* CoreDNS will compare "DC" tag for IP exctracted from CLIENT-SUBNET option against available endpoint.targets
+* Return only IPs where tags match
+* If IP have no common tag, all entries are returned.
+* CoreDNS must be supplied with specially crafted GeoIP database in MaxMind DB format and mounted as `/geoip.mmdb` Refer to `terratest/geo` for examples.
+
 ## Build
 
 ### With compile-time configuration file
