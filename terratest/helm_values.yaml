@@ -1,0 +1,9 @@
+coredns:
+  extraVolumes:
+   - name: geo-data 
+     configMap:
+       name: geodata
+  extraVolumeMounts:
+   - name: geo-data 
+     mountPath: /geoip.mmdb
+     subPath: geoip.mmdb 

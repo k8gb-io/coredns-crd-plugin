@@ -32,7 +32,7 @@ import (
 
 const defaultSvc = "external-dns.kube-system"
 
-type lookupFunc func(indexKey string) ([]net.IP, endpoint.TTL)
+type lookupFunc func(indexKey string, clientIP net.IP) ([]net.IP, endpoint.TTL)
 
 type resourceWithIndex struct {
 	name   string
@@ -98,13 +98,30 @@ func (gw *Gateway) updateResources(newResources []string) {
 	}
 }
 
+func extractEdnsSubnet(msg *dns.Msg) net.IP {
+	edns := msg.IsEdns0()
+	if edns == nil {
+		return nil
+	}
+	for _, o := range edns.Option {
+		if o.Option() == dns.EDNS0SUBNET {
+			subnet := o.(*dns.EDNS0_SUBNET)
+			return subnet.Address
+		}
+	}
+	return nil
+}
+
 // ServeDNS implements the plugin.Handle interface.
 func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	var clientIP net.IP
 	state := request.Request{W: w, Req: r}
 	log.Infof("Incoming query %s", state.QName())
 
 	qname := state.QName()
 	zone := plugin.Zones(gw.Zones).Matches(qname)
+	clientIP = extractEdnsSubnet(r)
+
 	if zone == "" {
 		log.Infof("Request %s has not matched any zones %v", qname, gw.Zones)
 		return plugin.NextOrFailure(gw.Name(), gw.Next, ctx, w, r)
@@ -140,7 +157,7 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 	// Iterate over supported resources and lookup DNS queries
 	// Stop once we've found at least one match
 	for _, resource := range gw.Resources {
-		addrs, ttl = resource.lookup(indexKey)
+		addrs, ttl = resource.lookup(indexKey, clientIP)
 		if len(addrs) > 0 {
 			break
 		}
@@ -210,7 +227,7 @@ func (gw *Gateway) SelfAddress(state request.Request) (records []dns.RR) {
 	var addrs []net.IP
 	var ttl endpoint.TTL
 	for _, resource := range gw.Resources {
-		addrs, ttl = resource.lookup(index)
+		addrs, ttl = resource.lookup(index, net.ParseIP(state.IP()))
 		if len(addrs) > 0 {
 			break
 		}
