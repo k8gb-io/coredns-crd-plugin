@@ -20,9 +20,9 @@ package test
 import (
 	"errors"
 	"fmt"
+	"net"
 	"testing"
 	"time"
-	"net"
 
 	"github.com/miekg/dns"
 )
@@ -31,10 +31,40 @@ const (
 	DefaultTimeout time.Duration = 5 * time.Second
 )
 
+type clientIP struct {
+	ip string
+	Opts *dns.OPT
+}
 
-func queryDNS(dnsServer string, dnsPort int, dnsName string, dnsType uint16, clientIP string) (*dns.Msg, error) {
+func NewClientIP(ip string) (cip *clientIP) {
+	cip = new(clientIP)
+	cip.ip = ip
+	if cip.IsEmpty() {
+		subnet := &dns.EDNS0_SUBNET{
+			Code:          dns.EDNS0SUBNET,
+			Address:       net.ParseIP(ip),
+			Family:        1, // IP4
+			SourceNetmask: net.IPv4len * 8,
+		}
+		cip.Opts = &dns.OPT{
+			Hdr: dns.RR_Header{
+				Name:   ".",
+				Rrtype: dns.TypeOPT,
+			},
+			Option: []dns.EDNS0{subnet},
+		}
+		return cip
+	}
+	return
+}
+
+func (cip *clientIP) IsEmpty() bool {
+	return cip.ip == ""
+}
+
+
+func queryDNS(dnsServer string, dnsPort int, dnsName string, dnsType uint16, clientIP *clientIP) (*dns.Msg, error) {
 	dnsName = fmt.Sprintf("%s.", dnsName)
-	ip := net.ParseIP(clientIP)
 	m := &dns.Msg{
 		MsgHdr: dns.MsgHdr{
 			RecursionDesired: true,
@@ -44,21 +74,8 @@ func queryDNS(dnsServer string, dnsPort int, dnsName string, dnsType uint16, cli
 	c := &dns.Client{
 		ReadTimeout: DefaultTimeout,
 	}
-	if clientIP != "" {
-		o := &dns.OPT{
-			Hdr: dns.RR_Header{
-				Name:   ".",
-				Rrtype: dns.TypeOPT,
-			},
-		}
-		e := &dns.EDNS0_SUBNET{
-			Code:          dns.EDNS0SUBNET,
-			Address:       ip,
-			Family:        1, // IP4
-			SourceNetmask: net.IPv4len * 8,
-		}
-		o.Option = append(o.Option, e)
-		m.Extra = append(m.Extra, o)
+	if !clientIP.IsEmpty() {
+		m.Extra = append(m.Extra, clientIP.Opts)
 	}
 	c.Net = "udp4"
 	c.Dialer = &net.Dialer{}
@@ -70,13 +87,12 @@ func queryDNS(dnsServer string, dnsPort int, dnsName string, dnsType uint16, cli
 }
 
 func DigMsg(t *testing.T, dnsServer string, dnsPort int, dnsName string, dnsType uint16) (*dns.Msg, error) {
-	clientIP := ""
-	return queryDNS(dnsServer, dnsPort, dnsName, dnsType, clientIP)
+	return queryDNS(dnsServer, dnsPort, dnsName, dnsType, NewClientIP(""))
 }
 
 func DigIPs(t *testing.T, dnsServer string, dnsPort int, dnsName string, dnsType uint16, clientIP string) ([]string, error) {
 	var result []string
-	r, err := queryDNS(dnsServer, dnsPort, dnsName, dnsType, clientIP)
+	r, err := queryDNS(dnsServer, dnsPort, dnsName, dnsType, NewClientIP(clientIP))
 
 	if err != nil {
 		return nil, err
