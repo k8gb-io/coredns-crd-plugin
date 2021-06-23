@@ -75,7 +75,7 @@ func queryDNS(dnsServer string, dnsPort int, dnsName string, dnsType uint16, cli
 	c := &dns.Client{
 		ReadTimeout: DefaultTimeout,
 	}
-	if clientIP.IsEmpty() {
+	if !clientIP.IsEmpty() {
 		m.Extra = append(m.Extra, clientIP.Opts)
 	}
 	c.Net = "udp4"
