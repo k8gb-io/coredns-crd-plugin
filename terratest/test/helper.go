@@ -39,7 +39,8 @@ type clientIP struct {
 func NewClientIP(ip string) (cip *clientIP) {
 	cip = new(clientIP)
 	cip.ip = ip
-	if cip.IsEmpty() {
+	cip.Opts = &dns.OPT{}
+	if !cip.IsEmpty() {
 		subnet := &dns.EDNS0_SUBNET{
 			Code:          dns.EDNS0SUBNET,
 			Address:       net.ParseIP(ip),
@@ -74,7 +75,7 @@ func queryDNS(dnsServer string, dnsPort int, dnsName string, dnsType uint16, cli
 	c := &dns.Client{
 		ReadTimeout: DefaultTimeout,
 	}
-	if !clientIP.IsEmpty() {
+	if clientIP.IsEmpty() {
 		m.Extra = append(m.Extra, clientIP.Opts)
 	}
 	c.Net = "udp4"
