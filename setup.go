@@ -20,6 +20,7 @@ package gateway
 import (
 	"context"
 
+	"fmt"
 	"strconv"
 
 	"github.com/coredns/caddy"
@@ -57,6 +58,16 @@ func setup(c *caddy.Controller) error {
 	return nil
 }
 
+func parseTTL(opt, arg string) (uint32, error) {
+	t, err := strconv.Atoi(arg)
+	if err != nil {
+		return uint32(t), err
+	}
+	if t < 0 || t > 3600 {
+		return uint32(t), fmt.Errorf("%s must be in range [0, 3600]: %d", opt, t)
+	}
+	return uint32(t), nil
+}
 func parse(c *caddy.Controller) (*Gateway, error) {
 	gw := newGateway()
 
@@ -74,47 +85,32 @@ func parse(c *caddy.Controller) (*Gateway, error) {
 		}
 
 		for c.NextBlock() {
-			switch c.Val() {
+			key := c.Val()
+			args := c.RemainingArgs()
+			if len(args) == 0 {
+				return nil, c.ArgErr()
+			}
+			switch key {
 			case "resources":
-				args := c.RemainingArgs()
-
 				gw.updateResources(args)
-
-				if len(args) == 0 {
-					return nil, c.Errf("Incorrectly formated 'resource' parameter")
-				}
 			case "filter":
-				args := c.RemainingArgs()
 				log.Infof("Filter: %+v", args)
-				if len(args) == 0 {
-					return nil, c.ArgErr()
-				}
 				gw.Filter = args[0]
 			case "annotation":
-				args := c.RemainingArgs()
 				log.Infof("annotation: %+v", args)
-				if len(args) == 0 {
-					return nil, c.ArgErr()
-				}
 				gw.Annotation = args[0]
 			case "ttl":
-				args := c.RemainingArgs()
-				if len(args) == 0 {
-					return nil, c.ArgErr()
-				}
-				t, err := strconv.Atoi(args[0])
+				ttl, err := parseTTL(c.Val(), args[0])
 				if err != nil {
-					return nil, err
+					gw.ttlLow = ttl
 				}
-				if t < 0 || t > 3600 {
-					return nil, c.Errf("ttl must be in range [0, 3600]: %d", t)
+			case "negttl":
+				log.Infof("negTTL: %+v", args[0])
+				negttl, err := parseTTL(c.Val(), args[0])
+				if err == nil {
+					gw.ttlHigh = negttl
 				}
-				gw.ttlLow = uint32(t)
 			case "apex":
-				args := c.RemainingArgs()
-				if len(args) == 0 {
-					return nil, c.ArgErr()
-				}
 				gw.apex = args[0]
 			default:
 				return nil, c.Errf("Unknown property '%s'", c.Val())
