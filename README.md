@@ -2,7 +2,7 @@
 
 A CoreDNS plugin that is very similar to [k8s_external](https://coredns.io/plugins/k8s_external/) but supporting DNSEndpoint external resource.
 
-**This project is a modification of [k8s_gateway](https://github.com/ori-edge/k9s_gateway) plugin, adopted with DNSEndpoint client.**
+**This project is a modification of [k8s_gateway](https://github.com/ori-edge/k8s_gateway) plugin, adopted with DNSEndpoint client.**
 
 This plugin relies on it's own connection to the k8s API server and doesn't share any code with the existing [kubernetes](https://coredns.io/plugins/kubernetes/) plugin. The assumption is that this plugin can now be deployed as a separate instance (alongside the internal kube-dns) and act as a single external DNS interface into your Kubernetes cluster(s).
 
@@ -49,7 +49,7 @@ In case dnsEndpoint object's target has a label of `strategy: geoip` CoreDNS `k8
 * CoreDNS will compare `DC` tag for IP extracted from `CLIENT-SUBNET` option against available Endpoint.Targets
 * Return only IPs where tags match
 * If IP has no common tag, all entries are returned.
-* CoreDNS must be supplied with a specially crafted GeoIP database in MaxMind DB format and mounted as `/geoip.mmdb` Refer to `terratest/geo` for examples.
+* CoreDNS must be supplied with a specially crafted GeoIP database in MaxMind DB format and mounted as `/geoip.mmdb` Refer to [./terratest/geogen](./terratest/geogen) for examples.
 
 ## Build
 
