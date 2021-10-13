@@ -1,6 +1,6 @@
 module github.com/AbsaOSS/k8s_crd
 
-go 1.15
+go 1.16
 
 replace go.etcd.io/etcd => go.etcd.io/etcd v0.5.0-alpha.5.0.20200425165423-262c93980547
 
