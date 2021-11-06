@@ -7,7 +7,7 @@ linters:
     - gocritic
     - gocyclo
     - goimports
-    - golint
+    - revive
     - gosec
     - gosimple
     - govet
