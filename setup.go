@@ -68,21 +68,12 @@ func parseTTL(opt, arg string) (uint32, error) {
 	}
 	return uint32(t), nil
 }
+
 func parse(c *caddy.Controller) (*Gateway, error) {
 	gw := newGateway()
 
 	for c.Next() {
-		zones := c.RemainingArgs()
-		gw.Zones = zones
-
-		if len(gw.Zones) == 0 {
-			gw.Zones = make([]string, len(c.ServerBlockKeys))
-			copy(gw.Zones, c.ServerBlockKeys)
-		}
-
-		for i, str := range gw.Zones {
-			gw.Zones[i] = plugin.Host(str).Normalize()
-		}
+		gw.Zones = plugin.OriginsFromArgsOrServerBlock(c.RemainingArgs(), c.ServerBlockKeys)
 
 		for c.NextBlock() {
 			key := c.Val()
