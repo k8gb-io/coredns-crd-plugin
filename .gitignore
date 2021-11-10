@@ -1,0 +1,5 @@
+# binaries
+coredns
+
+# dependency charts
+charts/coredns/charts/*.tgz
