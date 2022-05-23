@@ -12,7 +12,6 @@ coredns:
   servers:
   - zones:
     - zone: .
-      scheme: dns:// 
     port: 53
     plugins:
     - name: errors
@@ -32,4 +31,4 @@ coredns:
       configBlock: |-
         resources DNSEndpoint
         apex dns1
-        filter k8gb.absa.oss/dnstype=local 
+        filter k8gb.absa.oss/dnstype=local

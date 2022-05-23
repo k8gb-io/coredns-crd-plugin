@@ -60,6 +60,11 @@ image:
 create-local-cluster:
 	k3d cluster create -c k3d-cluster.yaml
 
+delete-local-cluster:
+	k3d cluster delete -c k3d-cluster.yaml
+
+reset: delete-local-cluster create-local-cluster
+
 import-image:
 	k3d image import -c coredns-crd absaoss/k8s_crd:${TAG}
 
