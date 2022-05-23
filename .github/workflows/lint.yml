@@ -1,9 +1,33 @@
 name: Lint
 
 on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - '**.svg'
+      - '**.drawio'
+      - '.spelling'
   pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - '**.md'
+      - '**.svg'
+      - '**.drawio'
+      - '.spelling'
 
 jobs:
+  skip-check:
+    runs-on: ubuntu-latest
+    name: Skip the job?
+    outputs:
+          should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+    - id: skip_check
+      uses: fkirc/skip-duplicate-actions@v3.4.1
+      with:
+        skip_after_successful_duplicate: 'true'
+        do_not_skip: '["workflow_dispatch", "schedule"]'
   # Linting is in a separate job because golangci-lint is quite slow when
   # running it in cold-start mode.
   lint:
@@ -14,5 +38,6 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.43.0
-          args: --timeout=2m30s
+          version: v1.45.0
+          args: --timeout=3m
+
