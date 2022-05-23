@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/gruntwork-io/terratest v0.38.6
-	github.com/miekg/dns v1.1.48
+	github.com/miekg/dns v1.1.49
 	github.com/stretchr/testify v1.7.0
 	k8s.io/api v0.20.6
 	k8s.io/apimachinery v0.20.6

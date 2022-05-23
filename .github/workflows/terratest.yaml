@@ -1,7 +1,15 @@
 name: Terratest
 
 on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - '**.svg'
+      - '**.drawio'
+      - '.spelling'
   pull_request:
+    branches:
+      - main
 
 jobs:
   terratest:
@@ -14,13 +22,13 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.17
       - name: build
         run: make build
       - name: build image
         run: make image
       - name: k3d
-        uses: AbsaOSS/k3d-action@v1.5.0
+        uses: AbsaOSS/k3d-action@v2
         with:
           cluster-name: "coredns-crd"
           args: >-

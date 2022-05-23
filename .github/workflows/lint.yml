@@ -1,7 +1,15 @@
 name: Lint
 
 on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - '**.svg'
+      - '**.drawio'
+      - '.spelling'
   pull_request:
+    branches:
+      - main
 
 jobs:
   # Linting is in a separate job because golangci-lint is quite slow when
@@ -14,5 +22,5 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.43.0
+          version: v1.45.0
           args: --timeout=2m30s
