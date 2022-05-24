@@ -9,7 +9,7 @@ on:
       - '.spelling'
   pull_request:
     branches:
-      - master
+      - main
     paths-ignore:
       - '**.md'
       - '**.svg'
@@ -39,5 +39,4 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.45.0
-          args: --timeout=3m
-
+          args: --timeout=3m30s
