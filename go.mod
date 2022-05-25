@@ -129,4 +129,7 @@ require (
 
 replace github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
 
-exclude go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
+exclude (
+	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
+	go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489
+)
