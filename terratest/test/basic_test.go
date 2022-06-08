@@ -44,6 +44,8 @@ func TestBasicExample(t *testing.T) {
 	require.NoError(t, err)
 	ttlEndpoint, err := filepath.Abs("../example/dnsendpoint_ttl.yaml")
 	require.NoError(t, err)
+	txtEndpoint, err := filepath.Abs("../example/dnsendpoint_txt.yaml")
+	require.NoError(t, err)
 	brokenEndpoint, err := filepath.Abs("../example/dnsendpoint_broken.yaml")
 	require.NoError(t, err)
 
@@ -119,5 +121,13 @@ func TestBasicExample(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, dns.RcodeNameError, msg.Rcode)
 		assert.Equal(t, 0, len(msg.Answer))
+	})
+	t.Run("Basic type TXT resolve", func(t *testing.T) {
+		expectedTXT := []string{"foo=bar"}
+		k8s.KubectlApply(t, options, txtEndpoint)
+		msg, err := DigMsg(t, "localhost", 1053, "txt.example.org", dns.TypeTXT)
+
+		require.NoError(t, err)
+		assert.Equal(t, expectedTXT, msg.Answer[0].(*dns.TXT).Txt)
 	})
 }

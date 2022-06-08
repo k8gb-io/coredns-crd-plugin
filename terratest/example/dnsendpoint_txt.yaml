@@ -1,0 +1,13 @@
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: coredns-txt
+  labels:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: txt.example.org
+    recordType: TXT
+    recordTTL: 30
+    targets:
+    - "foo=bar"

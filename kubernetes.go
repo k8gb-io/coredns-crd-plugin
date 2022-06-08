@@ -33,9 +33,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	endpoint "sigs.k8s.io/external-dns/endpoint"
-
 	// "k8s.io/client-go/tools/clientcmd"
-	"github.com/oschwald/maxminddb-golang"
 )
 
 const (
@@ -163,73 +161,14 @@ func endpointHostnameIndexFunc(obj interface{}) ([]string, error) {
 	return hostnames, nil
 }
 
-func fetchEndpointIPs(endpoints []*endpoint.Endpoint, host string, ip net.IP) (results []net.IP, ttl endpoint.TTL) {
-	for _, ep := range endpoints {
-		if ep.DNSName == host {
-			ttl = ep.RecordTTL
-			if ep.Labels["strategy"] == "geoip" {
-				results = extractGeo(ep, ip)
-				if len(results) > 0 {
-					return
-				}
-			}
-			results = extractEndpointIPs(ep)
-		}
-	}
-	return
-}
-
-func extractEndpointIPs(endpoint *endpoint.Endpoint) (result []net.IP) {
-	for _, ip := range endpoint.Targets {
-		result = append(result, net.ParseIP(ip))
-	}
-	return result
-}
-func extractGeo(endpoint *endpoint.Endpoint, clientIP net.IP) (result []net.IP) {
-	db, err := maxminddb.Open("geoip.mmdb")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	clientGeo := &geo{}
-	err = db.Lookup(clientIP, clientGeo)
-	if err != nil {
-		return nil
-	}
-
-	if clientGeo.DC == "" {
-		log.Infof("empty DC %+v", clientGeo)
-		return result
-	}
-
-	log.Infof("clientDC: %+v", clientGeo)
-
-	for _, ip := range endpoint.Targets {
-		geoData := &geo{}
-		log.Infof("processing IP %+v", ip)
-		err = db.Lookup(net.ParseIP(ip), geoData)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-
-		log.Infof("IP info: %+v", geoData.DC)
-		if clientGeo.DC == geoData.DC && geoData.DC != "" {
-			result = append(result, net.ParseIP(ip))
-		}
-	}
-	return result
-}
-
-func lookupEndpointIndex(ctrl cache.SharedIndexInformer) func(string, net.IP) ([]net.IP, endpoint.TTL) {
-	return func(indexKey string, clientIP net.IP) (result []net.IP, ttl endpoint.TTL) {
+func lookupEndpointIndex(ctrl cache.SharedIndexInformer) func(string, net.IP) ([]string, endpoint.TTL) {
+	return func(indexKey string, clientIP net.IP) (result []string, ttl endpoint.TTL) {
 
 		log.Infof("Index key %+v", indexKey)
 		objs, _ := ctrl.GetIndexer().ByIndex(endpointHostnameIndex, strings.ToLower(indexKey))
 		for _, obj := range objs {
 			endpoint := obj.(*endpoint.DNSEndpoint)
-			result, ttl = fetchEndpointIPs(endpoint.Spec.Endpoints, indexKey, clientIP)
+			result, ttl = fetchEndpointTargets(endpoint.Spec.Endpoints, indexKey, clientIP)
 		}
 
 		return
