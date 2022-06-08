@@ -32,7 +32,7 @@ import (
 
 const defaultSvc = "external-dns.kube-system"
 
-type lookupFunc func(indexKey string, clientIP net.IP) ([]net.IP, endpoint.TTL)
+type lookupFunc func(indexKey string, clientIP net.IP) ([]string, endpoint.TTL)
 
 type resourceWithIndex struct {
 	name   string
@@ -112,6 +112,13 @@ func extractEdnsSubnet(msg *dns.Msg) net.IP {
 	return nil
 }
 
+func targetToIP(targets []string) (ips []net.IP) {
+	for _, ip := range targets {
+		ips = append(ips, net.ParseIP(ip))
+	}
+	return
+}
+
 // ServeDNS implements the plugin.Handle interface.
 func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	var clientIP net.IP
@@ -151,7 +158,7 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 		}
 	}
 
-	var addrs []net.IP
+	var addrs []string
 	var ttl endpoint.TTL
 
 	// Iterate over supported resources and lookup DNS queries
@@ -178,7 +185,9 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 
 	switch state.QType() {
 	case dns.TypeA:
-		m.Answer = gw.A(state, addrs, ttl)
+		m.Answer = gw.A(state, targetToIP(addrs), ttl)
+	case dns.TypeTXT:
+		m.Answer = gw.TXT(state, addrs, ttl)
 	default:
 		m.Ns = []dns.RR{gw.soa(state)}
 	}
@@ -197,7 +206,7 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 // Name implements the Handler interface.
 func (gw *Gateway) Name() string { return thisPlugin }
 
-// A does the A-record lookup in ingress indexer
+// A generates dns.RR for A record
 func (gw *Gateway) A(state request.Request, results []net.IP, ttl endpoint.TTL) (records []dns.RR) {
 	dup := make(map[string]struct{})
 	if !ttl.IsConfigured() {
@@ -212,6 +221,14 @@ func (gw *Gateway) A(state request.Request, results []net.IP, ttl endpoint.TTL) 
 	return records
 }
 
+// TXT generates dns.RR for TXT record
+func (gw *Gateway) TXT(state request.Request, results []string, ttl endpoint.TTL) (records []dns.RR) {
+	if !ttl.IsConfigured() {
+		ttl = endpoint.TTL(gw.ttlLow)
+	}
+	return append(records, &dns.TXT{Hdr: dns.RR_Header{Name: state.Name(), Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: uint32(ttl)}, Txt: results})
+}
+
 func (gw *Gateway) SelfAddress(state request.Request) (records []dns.RR) {
 	// TODO: need to do self-index lookup for that i need
 	// a) my own namespace - easy
@@ -224,7 +241,7 @@ func (gw *Gateway) SelfAddress(state request.Request) (records []dns.RR) {
 		index = defaultSvc
 	}
 
-	var addrs []net.IP
+	var addrs []string
 	var ttl endpoint.TTL
 	for _, resource := range gw.Resources {
 		addrs, ttl = resource.lookup(index, net.ParseIP(state.IP()))
@@ -235,7 +252,7 @@ func (gw *Gateway) SelfAddress(state request.Request) (records []dns.RR) {
 
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
-	return gw.A(state, addrs, ttl)
+	return gw.A(state, targetToIP(addrs), ttl)
 }
 
 // Strips the closing dot unless it's "."
