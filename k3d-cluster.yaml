@@ -3,7 +3,7 @@ kind: Simple
 name: coredns-crd
 network: k3d-action-bridge-network
 ports:
-- port: 1053:53/udp
+- port: 1053:53/tcp
   nodeFilters:
   - loadbalancer
 options:

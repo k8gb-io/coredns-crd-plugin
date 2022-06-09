@@ -78,7 +78,7 @@ func queryDNS(dnsServer string, dnsPort int, dnsName string, dnsType uint16, cli
 	if !clientIP.IsEmpty() {
 		m.Extra = append(m.Extra, clientIP.Opts)
 	}
-	c.Net = "udp4"
+	c.Net = "tcp4"
 	c.Dialer = &net.Dialer{}
 
 	m.SetQuestion(dnsName, dnsType)
