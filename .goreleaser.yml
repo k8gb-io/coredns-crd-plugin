@@ -13,15 +13,14 @@ builds:
       - amd64
       - arm64
 dockers:
+- use: buildx
 - image_templates:
   - "absaoss/k8s_crd:{{ .Tag }}-amd64"
-  use_buildx: false
   dockerfile: Dockerfile
   build_flag_templates:
   - "--platform=linux/amd64"
 - image_templates:
   - "absaoss/k8s_crd:{{ .Tag }}-arm64"
-  use_buildx: false
   goarch: arm64
   dockerfile: Dockerfile
   build_flag_templates:
