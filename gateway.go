@@ -65,6 +65,7 @@ type Gateway struct {
 	Filter           string
 	Annotation       string
 	ExternalAddrFunc func(request.Request) []dns.RR
+	loadbalance      loadbalance
 }
 
 func newGateway() *Gateway {

@@ -31,23 +31,12 @@ var dropPlugins = map[string]bool{
 }
 
 func init() {
-	var directives []string
-	var alreadyAdded bool
-
-	for _, name := range dnsserver.Directives {
-
-		if dropPlugins[name] {
-			if !alreadyAdded {
-				directives = append(directives, "k8s_crd")
-				alreadyAdded = true
-			}
-			continue
-		}
-		directives = append(directives, name)
+	p := newPluginManager(dnsserver.Directives)
+	for k := range dropPlugins {
+		p.remove(k)
 	}
-
-	dnsserver.Directives = directives
-
+	p.insertBefore("k8s_crd", "hosts")
+	dnsserver.Directives = p.get()
 }
 
 func main() {

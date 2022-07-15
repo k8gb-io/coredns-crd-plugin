@@ -69,6 +69,13 @@ func parseTTL(opt, arg string) (uint32, error) {
 	return uint32(t), nil
 }
 
+func parseLoadbalance(arg string) loadbalance {
+	if arg == "weight" {
+		return lbWeight
+	}
+	return lbNone
+}
+
 func parse(c *caddy.Controller) (*Gateway, error) {
 	gw := newGateway()
 
@@ -103,11 +110,13 @@ func parse(c *caddy.Controller) (*Gateway, error) {
 				}
 			case "apex":
 				gw.apex = args[0]
+			case "loadbalance":
+				log.Infof("loadbalance: %+v", args[0])
+				gw.loadbalance = parseLoadbalance(args[0])
 			default:
 				return nil, c.Errf("Unknown property '%s'", c.Val())
 			}
 		}
 	}
 	return gw, nil
-
 }

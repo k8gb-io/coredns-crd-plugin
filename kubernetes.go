@@ -19,10 +19,11 @@ package gateway
 
 import (
 	"context"
-	"k8s.io/client-go/tools/clientcmd"
 	"net"
 	"os"
 	"strings"
+
+	"k8s.io/client-go/tools/clientcmd"
 
 	// "os"
 
@@ -106,7 +107,7 @@ func (ctrl *KubeController) HasSynced() bool {
 
 // RunKubeController kicks off the k8s controllers
 func RunKubeController(ctx context.Context, c *Gateway) (*KubeController, error) {
-	//config, err := rest.InClusterConfig()
+	// config, err := rest.InClusterConfig()
 
 	// Helpful to run coredns locally
 	kubeconfig := os.Getenv("KUBECONFIG")
