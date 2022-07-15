@@ -19,7 +19,9 @@ package gateway
 
 import (
 	"context"
+	"k8s.io/client-go/tools/clientcmd"
 	"net"
+	"os"
 	"strings"
 
 	// "os"
@@ -30,7 +32,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	endpoint "sigs.k8s.io/external-dns/endpoint"
 	// "k8s.io/client-go/tools/clientcmd"
@@ -105,11 +106,11 @@ func (ctrl *KubeController) HasSynced() bool {
 
 // RunKubeController kicks off the k8s controllers
 func RunKubeController(ctx context.Context, c *Gateway) (*KubeController, error) {
-	config, err := rest.InClusterConfig()
+	//config, err := rest.InClusterConfig()
 
 	// Helpful to run coredns locally
-	// kubeconfig := os.Getenv("KUBECONFIG")
-	// config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	kubeconfig := os.Getenv("KUBECONFIG")
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 
 	if err != nil {
 		return nil, err
