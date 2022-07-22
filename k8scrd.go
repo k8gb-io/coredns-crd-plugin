@@ -10,7 +10,7 @@ import (
 
 type K8sCRD struct {
 	Next      plugin.Handler
-	container service.ServiceContainer
+	container service.PluginContainer
 }
 
 func NewK8sCRD() *K8sCRD {
