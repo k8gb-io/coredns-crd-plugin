@@ -32,7 +32,7 @@ const (
 )
 
 type clientIP struct {
-	ip string
+	ip   string
 	Opts *dns.OPT
 }
 
@@ -62,7 +62,6 @@ func NewClientIP(ip string) (cip *clientIP) {
 func (cip *clientIP) IsEmpty() bool {
 	return cip.ip == ""
 }
-
 
 func queryDNS(dnsServer string, dnsPort int, dnsName string, dnsType uint16, clientIP *clientIP) (*dns.Msg, error) {
 	dnsName = fmt.Sprintf("%s.", dnsName)

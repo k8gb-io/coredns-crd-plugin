@@ -25,10 +25,15 @@ import (
 	"strings"
 
 	"github.com/coredns/coredns/plugin"
+	clog "github.com/coredns/coredns/plugin/pkg/log"
 	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
 	"sigs.k8s.io/external-dns/endpoint"
 )
+
+const thisPlugin = "gateway"
+
+var log = clog.NewWithPlugin(thisPlugin)
 
 const defaultSvc = "external-dns.kube-system"
 
@@ -67,7 +72,7 @@ type Gateway struct {
 	ExternalAddrFunc func(request.Request) []dns.RR
 }
 
-func newGateway() *Gateway {
+func NewGateway() *Gateway {
 	return &Gateway{
 		apex:       defaultApex,
 		Resources:  orderedResources,
@@ -87,7 +92,7 @@ func lookupResource(resource string) *resourceWithIndex {
 	return nil
 }
 
-func (gw *Gateway) updateResources(newResources []string) {
+func (gw *Gateway) UpdateResources(newResources []string) {
 
 	gw.Resources = []*resourceWithIndex{}
 
@@ -253,6 +258,18 @@ func (gw *Gateway) SelfAddress(state request.Request) (records []dns.RR) {
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
 	return gw.A(state, targetToIP(addrs), ttl)
+}
+
+func (gw *Gateway) SetTTLLow(ttl uint32) {
+	gw.ttlLow = ttl
+}
+
+func (gw *Gateway) SetTTLHigh(ttl uint32) {
+	gw.ttlHigh = ttl
+}
+
+func (gw *Gateway) SetApex(apex string) {
+	gw.apex = apex
 }
 
 // Strips the closing dot unless it's "."
