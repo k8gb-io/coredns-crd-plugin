@@ -2,6 +2,7 @@ package wrr
 
 import (
 	"context"
+
 	"github.com/miekg/dns"
 )
 
