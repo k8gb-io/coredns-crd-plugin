@@ -1,13 +1,16 @@
 module github.com/AbsaOSS/k8s_crd
 
-go 1.17
+go 1.18
 
 require (
 	github.com/coredns/caddy v1.1.1
 	github.com/coredns/coredns v1.9.2
+	github.com/golang/mock v1.6.0
+	github.com/k8gb-io/go-weight-shuffling v0.4.0
 	github.com/maxmind/mmdbwriter v0.0.0-20210819141656-efe6d8ec5816
 	github.com/miekg/dns v1.1.49
 	github.com/oschwald/maxminddb-golang v1.9.0
+	github.com/stretchr/testify v1.7.1
 	k8s.io/api v0.24.0
 	k8s.io/apimachinery v0.24.0
 	k8s.io/client-go v0.24.0
@@ -82,6 +85,7 @@ require (
 	github.com/oschwald/geoip2-golang v1.7.0 // indirect
 	github.com/philhofer/fwd v1.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.12.1 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.34.0 // indirect

@@ -18,7 +18,7 @@ on:
 
 jobs:
   skip-check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     name: Skip the job?
     outputs:
           should_skip: ${{ steps.skip_check.outputs.should_skip }}

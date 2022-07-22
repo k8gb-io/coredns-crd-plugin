@@ -37,19 +37,44 @@ Optionally, you can specify what kind of resources to watch, default TTL to retu
 
 ```
 k8s_crd example.com {
-    resources DNSEndpoint
     ttl 10
     apex dns1
 }
 ```
 
 ## Resolving order
+
+### GeoIP
 In case dnsEndpoint object's target has a label of `strategy: geoip` CoreDNS `k8s_crd` plugin will respond in a special way:
 * Assuming record has multiple IPs associated with it, and DNS message comes with edns0 `CLIENT-SUBNET` option.
 * CoreDNS will compare `DC` tag for IP extracted from `CLIENT-SUBNET` option against available Endpoint.Targets
 * Return only IPs where tags match
 * If IP has no common tag, all entries are returned.
 * CoreDNS must be supplied with a specially crafted GeoIP database in MaxMind DB format and mounted as `/geoip.mmdb` Refer to [./terratest/geogen](./terratest/geogen) for examples.
+
+
+### Weight Round Robin
+To enable the weight round robin you have to set the configuration to weight load-balancer:
+```
+k8s_crd example.com {
+    loadbalance weight
+    ...
+}
+```
+The dnsEndpoint must also contain information about the percentage distribution per region 
+and their IP addresses. Thanks to this, the weight round-robin module will know in which 
+order to return IP addresses. Addresses with high probability will often be at the top of 
+DNS responses, while those with low probability will be at the bottom.
+```yaml
+labels:
+    strategy: roundrobin
+    weight-eu-0-50: 10.0.0.1
+    weight-eu-1-50: 10.0.0.2
+    weight-za-0-0:  10.10.0.1
+    weight-us-0-50: 10.20.0.1
+```
+For more information about balancing, please visit our [go-weight-shuffling](https://github.com/k8gb-io/go-weight-shuffling
+) module.
 
 ## Build
 

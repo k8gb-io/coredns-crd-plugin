@@ -30,6 +30,6 @@ coredns:
     - name: k8s_crd 
       parameters: example.org
       configBlock: |-
-        resources DNSEndpoint
         apex dns1
-        filter k8gb.absa.oss/dnstype=local 
+        filter k8gb.absa.oss/dnstype=local
+        loadbalance weight

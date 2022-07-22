@@ -1,4 +1,4 @@
-name: Lint
+name: Lint, Test, Golic
 
 on:
   push:
@@ -38,5 +38,11 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.45.0
+          version: v1.46.2
           args: --timeout=3m30s
+      - name: go test
+        run: go test ./...
+      - name: golic
+        run: |
+          go install github.com/AbsaOSS/golic@v0.7.2
+          golic inject --dry -x -t apache2 -c "2022 The k8gb Contributors"
