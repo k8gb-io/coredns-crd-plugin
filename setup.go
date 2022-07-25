@@ -55,8 +55,8 @@ func setup(c *caddy.Controller) error {
 	gw.ExternalAddrFunc = gw.SelfAddress
 
 	k8sCRD := NewK8sCRD()
-	k8sCRD.container.Add(gw)
-	k8sCRD.container.Add(wrr.NewWeightRoundRobin())
+	_ = k8sCRD.container.Add(gw)
+	_ = k8sCRD.container.Add(wrr.NewWeightRoundRobin())
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 		k8sCRD.Next = next
 		return k8sCRD

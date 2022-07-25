@@ -23,20 +23,3 @@ func parseAnswerSection(arr []dns.RR) (ipmap map[string]dns.RR, ip []string, noi
 	}
 	return
 }
-
-// ipsToSet converts list of IPs into set of IP's
-func ipsToSet(ips []string) (m map[string]bool) {
-	m = make(map[string]bool)
-	for _, ip := range ips {
-		m[ip] = true
-	}
-	return
-}
-
-// rotate items from one slice to another
-func rotate(slice []string) (r []string) {
-	for i := range slice {
-		r = append(r, slice[(i+1)%len(slice)])
-	}
-	return
-}

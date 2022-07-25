@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/miekg/dns"
@@ -42,9 +43,9 @@ func (c *Container) Execute(ctx context.Context, w dns.ResponseWriter, msg *dns.
 }
 
 // getMsg reads written msg from dns.ResponseWriter. The message can be further modified in the next iteration by
-//the container
+// the container
 // TODO: hack, casting interface into original interface. Consider reimplement gateway into dns.ResponseWriter.
 func getMsg(w dns.ResponseWriter) (msg *dns.Msg) {
-	impl :=  w.(*dnstest.Recorder)
+	impl := w.(*dnstest.Recorder)
 	return impl.Msg
 }
