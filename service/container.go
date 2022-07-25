@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
-
 	"github.com/coredns/coredns/plugin"
+	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/miekg/dns"
 )
 
@@ -26,9 +26,11 @@ func (c *Container) Add(handler plugin.Handler) error {
 	return nil
 }
 
-func (c *Container) Execute(ctx context.Context, w dns.ResponseWriter, msg *dns.Msg) error {
+func (c *Container) Execute(ctx context.Context, w dns.ResponseWriter, msg *dns.Msg) (err error) {
+	var rcode int
 	for _, svc := range c.services {
-		rcode, err := svc.ServeDNS(ctx, w, msg)
+		rcode, err = svc.ServeDNS(ctx, w, msg)
+		msg = getMsg(w)
 		if err != nil {
 			return fmt.Errorf("%s: %w", svc.Name(), err)
 		}
@@ -37,4 +39,12 @@ func (c *Container) Execute(ctx context.Context, w dns.ResponseWriter, msg *dns.
 		}
 	}
 	return nil
+}
+
+// getMsg reads written msg from dns.ResponseWriter. The message can be further modified in the next iteration by
+//the container
+// TODO: hack, casting interface into original interface. Consider reimplement gateway into dns.ResponseWriter.
+func getMsg(w dns.ResponseWriter) (msg *dns.Msg) {
+	impl :=  w.(*dnstest.Recorder)
+	return impl.Msg
 }
