@@ -165,14 +165,12 @@ func endpointHostnameIndexFunc(obj interface{}) ([]string, error) {
 
 func lookupEndpointIndex(ctrl cache.SharedIndexInformer) func(string, net.IP) ([]string, endpoint.TTL) {
 	return func(indexKey string, clientIP net.IP) (result []string, ttl endpoint.TTL) {
-
 		log.Infof("Index key %+v", indexKey)
 		objs, _ := ctrl.GetIndexer().ByIndex(endpointHostnameIndex, strings.ToLower(indexKey))
 		for _, obj := range objs {
 			endpoint := obj.(*endpoint.DNSEndpoint)
 			result, ttl = fetchEndpointTargets(endpoint.Spec.Endpoints, indexKey, clientIP)
 		}
-
 		return
 	}
 }
