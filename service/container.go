@@ -36,7 +36,7 @@ func (c *Container) Execute(ctx context.Context, w dns.ResponseWriter, msg *dns.
 			return fmt.Errorf("%s: %w", svc.Name(), err)
 		}
 		if rcode != dns.RcodeSuccess {
-			return fmt.Errorf("%s: returns unsuccesfull code", svc.Name())
+			return fmt.Errorf("[service: %s]", svc.Name())
 		}
 	}
 	return nil
