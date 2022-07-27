@@ -20,7 +20,7 @@ BIN := k8s_crd
 REGISTRY ?= docker.io/absaoss
 
 # Tag 
-TAG ?= latest
+TAG ?= v0.0.1
 
 # Image URL to use all building/pushing image targets
 IMG ?= $(REGISTRY)/$(BIN)
@@ -54,7 +54,7 @@ clean:
 	go clean
 	rm -f coredns
 
-image: 
+image: lint build
 	docker build . -t ${IMG}:${TAG}
 
 create-local-cluster:
