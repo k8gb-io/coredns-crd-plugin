@@ -1,64 +1,67 @@
 package service
 
 import (
-	"github.com/miekg/dns"
 	"net"
+
+	"github.com/miekg/dns"
 )
 
-// container writer allows access to Message object (written by w.WriteMsg()) which is hidden by dns.ResponseWriter
+// containerResponseWriter writer allows access to Message object (written by w.WriteMsg()) which is hidden by dns.ResponseWriter.
+// The containerResponseWriter wraps any ResponseWriter and add getMsg function which provides Written message
 // the struct is private, no access outside of package
-type containerWriter struct {
-	w dns.ResponseWriter
+type containerResponseWriter struct {
+	w   dns.ResponseWriter
 	msg *dns.Msg
 }
 
-func newContainerWriter(w dns.ResponseWriter) *containerWriter {
-	return &containerWriter{
+func newContainerWriter(w dns.ResponseWriter) *containerResponseWriter {
+	return &containerResponseWriter{
 		w: w,
 	}
 }
 
 // LocalAddr returns the net.Addr of the server
-func (c *containerWriter) LocalAddr() net.Addr {
+func (c *containerResponseWriter) LocalAddr() net.Addr {
 	return c.w.LocalAddr()
 }
+
 // RemoteAddr returns the net.Addr of the client that sent the current request.
-func (c *containerWriter) RemoteAddr() net.Addr {
+func (c *containerResponseWriter) RemoteAddr() net.Addr {
 	return c.w.RemoteAddr()
 }
 
 // WriteMsg writes a reply back to the client.
-func (c *containerWriter) WriteMsg(msg *dns.Msg) error {
+func (c *containerResponseWriter) WriteMsg(msg *dns.Msg) error {
 	c.msg = msg
 	return c.w.WriteMsg(msg)
 }
 
 // Write writes a raw buffer back to the client.
-func (c *containerWriter) Write(bytes []byte) (int, error) {
+func (c *containerResponseWriter) Write(bytes []byte) (int, error) {
 	return c.w.Write(bytes)
 }
 
 // Close closes the connection.
-func (c *containerWriter) Close() error {
+func (c *containerResponseWriter) Close() error {
 	return c.w.Close()
 }
 
 // TsigStatus returns the status of the Tsig.
-func (c *containerWriter) TsigStatus() error {
+func (c *containerResponseWriter) TsigStatus() error {
 	return c.w.TsigStatus()
 }
 
 // TsigTimersOnly sets the tsig timers only boolean.
-func (c *containerWriter) TsigTimersOnly(b bool) {
+func (c *containerResponseWriter) TsigTimersOnly(b bool) {
 	c.w.TsigTimersOnly(b)
 }
 
 // Hijack lets the caller take over the connection.
 // After a call to Hijack(), the DNS package will not do anything with the connection.
-func (c *containerWriter) Hijack() {
+func (c *containerResponseWriter) Hijack() {
 	c.w.Hijack()
 }
 
-func (c *containerWriter) getMsg() *dns.Msg {
+func (c *containerResponseWriter) getMsg() *dns.Msg {
 	return c.msg
 }
