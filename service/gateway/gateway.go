@@ -39,19 +39,6 @@ var log = clog.NewWithPlugin(thisPlugin)
 
 const defaultSvc = "external-dns.kube-system"
 
-type lookupFunc func(indexKey string, clientIP net.IP) ([]string, endpoint.TTL)
-
-type resourceWithIndex struct {
-	name   string
-	lookup lookupFunc
-}
-
-var orderedResources = []*resourceWithIndex{
-	{
-		name: "DNSEndpoint",
-	},
-}
-
 var (
 	ttlLowDefault     = uint32(60)
 	ttlHighDefault    = uint32(3600)
