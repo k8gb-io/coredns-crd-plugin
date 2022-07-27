@@ -41,7 +41,7 @@ const (
 // TODO: is new logger instance necessary
 var log = clog.NewWithPlugin("k8s controller")
 
-var orderedResources = []*ResourceWithIndex{
+var OrderedResources = []*ResourceWithIndex{
 	{
 		Name: "DNSEndpoint",
 	},
@@ -72,7 +72,7 @@ func NewKubeController(ctx context.Context, c *dnsendpoint.ExtDNSClient, label s
 }
 
 func lookupResource(resource string) *ResourceWithIndex {
-	for _, r := range orderedResources {
+	for _, r := range OrderedResources {
 		if r.Name == resource {
 			return r
 		}
@@ -89,7 +89,7 @@ func (ctrl *KubeController) UpdateResources(newResources []string) {
 	}
 }
 
-func (ctrl *KubeController) run() {
+func (ctrl *KubeController) Run() {
 	stopCh := make(chan struct{})
 	defer close(stopCh)
 
@@ -107,6 +107,11 @@ func (ctrl *KubeController) run() {
 	ctrl.hasSynced = true
 
 	<-stopCh
+}
+
+// HasSynced returns true if all controllers have been synced
+func (ctrl *KubeController) HasSynced() bool {
+	return ctrl.hasSynced
 }
 
 func endpointLister(ctx context.Context, c dnsendpoint.ExtDNSInterface, ns, label string) func(meta.ListOptions) (runtime.Object, error) {

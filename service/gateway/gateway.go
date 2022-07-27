@@ -24,6 +24,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/AbsaOSS/k8s_crd/service/common/k8sctrl"
+
 	"github.com/coredns/coredns/plugin"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
 	"github.com/coredns/coredns/request"
@@ -61,10 +63,10 @@ var (
 type Gateway struct {
 	Next             plugin.Handler
 	Zones            []string
-	Resources        []*resourceWithIndex
+	Resources        []*k8sctrl.ResourceWithIndex
 	ttlLow           uint32
 	ttlHigh          uint32
-	Controller       *KubeController
+	Controller       *k8sctrl.KubeController
 	apex             string
 	hostmaster       string
 	Filter           string
@@ -75,17 +77,17 @@ type Gateway struct {
 func NewGateway() *Gateway {
 	return &Gateway{
 		apex:       defaultApex,
-		Resources:  orderedResources,
+		Resources:  k8sctrl.OrderedResources,
 		ttlLow:     ttlLowDefault,
 		ttlHigh:    ttlHighDefault,
 		hostmaster: defaultHostmaster,
 	}
 }
 
-func lookupResource(resource string) *resourceWithIndex {
+func lookupResource(resource string) *k8sctrl.ResourceWithIndex {
 
-	for _, r := range orderedResources {
-		if r.name == resource {
+	for _, r := range k8sctrl.OrderedResources {
+		if r.Name == resource {
 			return r
 		}
 	}
@@ -94,7 +96,7 @@ func lookupResource(resource string) *resourceWithIndex {
 
 func (gw *Gateway) UpdateResources(newResources []string) {
 
-	gw.Resources = []*resourceWithIndex{}
+	gw.Resources = []*k8sctrl.ResourceWithIndex{}
 
 	for _, name := range newResources {
 		if resource := lookupResource(name); resource != nil {
@@ -169,7 +171,9 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 	// Iterate over supported resources and lookup DNS queries
 	// Stop once we've found at least one match
 	for _, resource := range gw.Resources {
-		addrs, ttl = resource.lookup(indexKey, clientIP)
+		ep := resource.Lookup(indexKey, clientIP)
+		// TODO: solve following line
+		addrs, ttl = ep.Endpoints[0].Targets, ep.Endpoints[0].TTL
 		if len(addrs) > 0 {
 			break
 		}
@@ -249,7 +253,9 @@ func (gw *Gateway) SelfAddress(state request.Request) (records []dns.RR) {
 	var addrs []string
 	var ttl endpoint.TTL
 	for _, resource := range gw.Resources {
-		addrs, ttl = resource.lookup(index, net.ParseIP(state.IP()))
+		ep := resource.Lookup(index, net.ParseIP(state.IP()))
+		// TODO: solve following line
+		addrs, ttl = ep.Endpoints[0].Targets, ep.Endpoints[0].TTL
 		if len(addrs) > 0 {
 			break
 		}

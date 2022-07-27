@@ -23,6 +23,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/AbsaOSS/k8s_crd/service/common/k8sctrl"
+
 	"k8s.io/client-go/tools/clientcmd"
 
 	// "os"
@@ -73,7 +75,7 @@ func newKubeController(ctx context.Context, c *dnsendpoint.ExtDNSClient, label s
 			defaultResyncPeriod,
 			cache.Indexers{endpointHostnameIndex: endpointHostnameIndexFunc},
 		)
-		resource.lookup = lookupEndpointIndex(endpointController)
+		//TODO: resource.lookup = lookupEndpointIndex(endpointController)
 		ctrl.controllers = append(ctrl.controllers, endpointController)
 	}
 
@@ -106,7 +108,7 @@ func (ctrl *KubeController) HasSynced() bool {
 }
 
 // RunKubeController kicks off the k8s controllers
-func RunKubeController(ctx context.Context, c *Gateway) (*KubeController, error) {
+func RunKubeController(ctx context.Context, c *Gateway) (*k8sctrl.KubeController, error) {
 	// config, err := rest.InClusterConfig()
 
 	// Helpful to run coredns locally
@@ -127,9 +129,9 @@ func RunKubeController(ctx context.Context, c *Gateway) (*KubeController, error)
 		return nil, err
 	}
 
-	ctrl := newKubeController(ctx, kubeClient, c.Filter)
+	ctrl := k8sctrl.NewKubeController(ctx, kubeClient, c.Filter)
 
-	go ctrl.run()
+	go ctrl.Run()
 
 	return ctrl, nil
 

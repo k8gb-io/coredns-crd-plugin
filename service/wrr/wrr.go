@@ -17,8 +17,8 @@ func NewWeightRoundRobin() *WeightRoundRobin {
 }
 
 func (wrr *WeightRoundRobin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
-	a, b, c := parseAnswerSection(r.Answer)
-	fmt.Println(a, b, c)
+	a, _, _ := parseAnswerSection(r.Answer)
+	fmt.Println(a)
 	return dns.RcodeSuccess, nil
 }
 
