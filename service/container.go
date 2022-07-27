@@ -31,7 +31,9 @@ func (c *Container) Execute(ctx context.Context, w dns.ResponseWriter, msg *dns.
 	wr := newContainerWriter(w)
 	for _, svc := range c.services {
 		rcode, err = svc.ServeDNS(ctx, wr, msg)
-		msg = wr.getMsg()
+		if wr.MessageWasWritten() {
+			msg = wr.getMsg()
+		}
 		if err != nil {
 			return fmt.Errorf("%s: %w", svc.Name(), err)
 		}

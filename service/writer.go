@@ -10,8 +10,9 @@ import (
 // The containerResponseWriter wraps any ResponseWriter and add getMsg function which provides Written message
 // the struct is private, no access outside of package
 type containerResponseWriter struct {
-	w   dns.ResponseWriter
-	msg *dns.Msg
+	w          dns.ResponseWriter
+	msg        *dns.Msg
+	wasWritten bool
 }
 
 func newContainerWriter(w dns.ResponseWriter) *containerResponseWriter {
@@ -33,7 +34,9 @@ func (c *containerResponseWriter) RemoteAddr() net.Addr {
 // WriteMsg writes a reply back to the client.
 func (c *containerResponseWriter) WriteMsg(msg *dns.Msg) error {
 	c.msg = msg
-	return c.w.WriteMsg(msg)
+	err := c.w.WriteMsg(msg)
+	c.wasWritten = err != nil
+	return err
 }
 
 // Write writes a raw buffer back to the client.
@@ -64,4 +67,9 @@ func (c *containerResponseWriter) Hijack() {
 
 func (c *containerResponseWriter) getMsg() *dns.Msg {
 	return c.msg
+}
+
+// MessageWasWritten decides whether message was successfully written by ResponseWriter
+func (c *containerResponseWriter) MessageWasWritten() bool {
+	return c.wasWritten
 }

@@ -136,7 +136,7 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 
 	if zone == "" {
 		log.Infof("Request %s has not matched any zones %v", qname, gw.Zones)
-		return plugin.NextOrFailure(gw.Name(), gw.Next, ctx, w, r)
+		return dns.RcodeSuccess, nil // plugin.NextOrFailure(gw.Name(), gw.Next, ctx, w, r)
 	}
 	zone = qname[len(qname)-len(zone):] // maintain case of original query
 	state.Zone = zone

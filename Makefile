@@ -20,7 +20,7 @@ BIN := k8s_crd
 REGISTRY ?= docker.io/absaoss
 
 # Tag 
-TAG ?= v0.0.1
+TAG ?= v0.0.51
 
 # Image URL to use all building/pushing image targets
 IMG ?= $(REGISTRY)/$(BIN)
@@ -54,7 +54,7 @@ clean:
 	go clean
 	rm -f coredns
 
-image: lint build
+image:
 	docker build . -t ${IMG}:${TAG}
 
 create-local-cluster:
@@ -84,3 +84,5 @@ license: golic
 terratest: deploy-app
 	cd terratest/test/ && go test -v
 
+.PHONY: redeploy
+redeploy: lint build deploy-app
