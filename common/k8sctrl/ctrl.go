@@ -24,13 +24,17 @@ type KubeController struct {
 	hasSynced   bool
 	resources   []*ResourceWithIndex
 	indexer     cache.Indexer
+	epc cache.SharedIndexInformer
 }
 
 type LookupEndpoint func(indexKey string, clientIP net.IP) (result EndpointResult)
 
+type LookupFunc func(indexKey string, clientIP net.IP) ([]string, endpoint.TTL)
+
 type ResourceWithIndex struct {
 	Name   string
-	Lookup LookupEndpoint
+	Lookup  LookupEndpoint
+	Lookup2 LookupFunc
 }
 
 const (
@@ -66,7 +70,8 @@ func NewKubeController(ctx context.Context, c *dnsendpoint.ExtDNSClient, label s
 		cache.Indexers{endpointHostnameIndex: endpointHostnameIndexFunc},
 	)
 	ctrl.indexer = endpointController.GetIndexer()
-	dnsEndpoint.Lookup = ctrl.getEndpointByIndexKey
+	ctrl.epc = endpointController
+	dnsEndpoint.Lookup2 = ctrl.lookupEndpointIndex
 	ctrl.controllers = append(ctrl.controllers, endpointController)
 	return ctrl
 }
@@ -144,7 +149,7 @@ func endpointHostnameIndexFunc(obj interface{}) ([]string, error) {
 
 func (ctrl *KubeController) getEndpointByIndexKey(indexKey string, clientIP net.IP) (result EndpointResult) {
 	log.Infof("Index key %+v", indexKey)
-	objs, err := ctrl.indexer.ByIndex(endpointHostnameIndex, strings.ToLower(indexKey))
+	objs, err := ctrl.epc.GetIndexer().ByIndex(endpointHostnameIndex, strings.ToLower(indexKey))
 	if err != nil {
 		return result
 	}
