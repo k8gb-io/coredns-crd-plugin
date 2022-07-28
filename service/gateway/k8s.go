@@ -19,10 +19,11 @@ package gateway
 
 import (
 	"context"
-	"github.com/AbsaOSS/k8s_crd/common/k8sctrl"
 	"net"
 	"os"
 	"strings"
+
+	"github.com/AbsaOSS/k8s_crd/common/k8sctrl"
 
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -177,5 +178,3 @@ func lookupEndpointIndex(ctrl cache.SharedIndexInformer) func(string, net.IP) ([
 		return
 	}
 }
-
-

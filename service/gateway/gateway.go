@@ -20,10 +20,11 @@ package gateway
 import (
 	"context"
 	"fmt"
-	"github.com/AbsaOSS/k8s_crd/common/k8sctrl"
 	"net"
 	"os"
 	"strings"
+
+	"github.com/AbsaOSS/k8s_crd/common/k8sctrl"
 
 	"github.com/coredns/coredns/plugin"
 	clog "github.com/coredns/coredns/plugin/pkg/log"

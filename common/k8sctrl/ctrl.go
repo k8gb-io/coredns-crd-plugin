@@ -5,7 +5,6 @@ import (
 	"net"
 	"strings"
 
-	"github.com/oschwald/maxminddb-golang"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	dnsendpoint "github.com/AbsaOSS/k8s_crd/extdns"
@@ -23,8 +22,7 @@ type KubeController struct {
 	labelFilter string
 	hasSynced   bool
 	resources   []*ResourceWithIndex
-	indexer     cache.Indexer
-	epc cache.SharedIndexInformer
+	epc         cache.SharedIndexInformer
 }
 
 type LookupEndpoint func(indexKey string, clientIP net.IP) (result EndpointResult)
@@ -32,7 +30,7 @@ type LookupEndpoint func(indexKey string, clientIP net.IP) (result EndpointResul
 type LookupFunc func(indexKey string, clientIP net.IP) ([]string, endpoint.TTL)
 
 type ResourceWithIndex struct {
-	Name   string
+	Name    string
 	Lookup  LookupEndpoint
 	Lookup2 LookupFunc
 }
@@ -69,9 +67,9 @@ func NewKubeController(ctx context.Context, c *dnsendpoint.ExtDNSClient, label s
 		defaultResyncPeriod,
 		cache.Indexers{endpointHostnameIndex: endpointHostnameIndexFunc},
 	)
-	ctrl.indexer = endpointController.GetIndexer()
 	ctrl.epc = endpointController
 	dnsEndpoint.Lookup2 = ctrl.lookupEndpointIndex
+	dnsEndpoint.Lookup = ctrl.getEndpointByName
 	ctrl.controllers = append(ctrl.controllers, endpointController)
 	return ctrl
 }
@@ -147,17 +145,21 @@ func endpointHostnameIndexFunc(obj interface{}) ([]string, error) {
 	return hostnames, nil
 }
 
-func (ctrl *KubeController) getEndpointByIndexKey(indexKey string, clientIP net.IP) (result EndpointResult) {
-	log.Infof("Index key %+v", indexKey)
-	objs, err := ctrl.epc.GetIndexer().ByIndex(endpointHostnameIndex, strings.ToLower(indexKey))
+func (ctrl *KubeController) getEndpointByName(hostName string, clientIP net.IP) (result EndpointResult) {
+	log.Infof("Index key %+v", hostName)
+	objs, err := ctrl.epc.GetIndexer().ByIndex(endpointHostnameIndex, strings.ToLower(hostName))
 	if err != nil {
 		return result
 	}
 	for _, obj := range objs {
 		ep := obj.(*endpoint.DNSEndpoint)
-		result = fetchEndpoint(ep, indexKey, clientIP)
-		if !result.IsEmpty() {
-			break
+		if ep == nil {
+			return result
+		}
+		for _, e := range ep.Spec.Endpoints {
+			if e.DNSName == hostName {
+				return newEndpoint(e, clientIP, hostName)
+			}
 		}
 	}
 	return result
@@ -167,57 +169,4 @@ type geo struct {
 	DC string `maxminddb:"datacenter"`
 }
 
-// fetchEndpoint retrieves endpoint which has DNSName equal to host
-func fetchEndpoint(dnsEndpoint *endpoint.DNSEndpoint, host string, ip net.IP) (result EndpointResult) {
-	if dnsEndpoint == nil {
-		return result
-	}
-	for _, ep := range dnsEndpoint.Spec.Endpoints {
-		if ep.DNSName == host {
-			targets := ep.Targets
-			if ep.Labels["strategy"] == "geoip" {
-				targets = extractGeo(ep, ip)
-			}
-			result.Append(targets, ep.Labels, host, ep.RecordTTL)
-			return result
-		}
-	}
-	return result
-}
 
-func extractGeo(endpoint *endpoint.Endpoint, clientIP net.IP) (result []string) {
-	db, err := maxminddb.Open("geoip.mmdb")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	clientGeo := &geo{}
-	err = db.Lookup(clientIP, clientGeo)
-	if err != nil {
-		return nil
-	}
-
-	if clientGeo.DC == "" {
-		log.Infof("empty DC %+v", clientGeo)
-		return result
-	}
-
-	log.Infof("clientDC: %+v", clientGeo)
-
-	for _, ip := range endpoint.Targets {
-		geoData := &geo{}
-		log.Infof("processing IP %+v", ip)
-		err = db.Lookup(net.ParseIP(ip), geoData)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-
-		log.Infof("IP info: %+v", geoData.DC)
-		if clientGeo.DC == geoData.DC {
-			result = append(result, ip)
-		}
-	}
-	return result
-}

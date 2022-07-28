@@ -2,11 +2,12 @@ package k8sctrl
 
 import (
 	"net"
-	"sigs.k8s.io/external-dns/endpoint"
 	"strings"
+
+	"sigs.k8s.io/external-dns/endpoint"
 )
 
-func (ctrl *KubeController) lookupEndpointIndex(indexKey string, clientIP net.IP)  (result []string, ttl endpoint.TTL) {
+func (ctrl *KubeController) lookupEndpointIndex(indexKey string, clientIP net.IP) (result []string, ttl endpoint.TTL) {
 	log.Infof("Index key %+v", indexKey)
 	objs, _ := ctrl.epc.GetIndexer().ByIndex(endpointHostnameIndex, strings.ToLower(indexKey))
 	for _, obj := range objs {
@@ -15,7 +16,6 @@ func (ctrl *KubeController) lookupEndpointIndex(indexKey string, clientIP net.IP
 	}
 	return
 }
-
 
 func fetchEndpointTargets(endpoints []*endpoint.Endpoint, host string, ip net.IP) (results []string, ttl endpoint.TTL) {
 	for _, ep := range endpoints {
@@ -32,4 +32,3 @@ func fetchEndpointTargets(endpoints []*endpoint.Endpoint, host string, ip net.IP
 	}
 	return
 }
-
