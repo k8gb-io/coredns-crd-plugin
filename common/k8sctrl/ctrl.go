@@ -25,7 +25,7 @@ type KubeController struct {
 	epc         cache.SharedIndexInformer
 }
 
-type LookupEndpoint func(indexKey string, clientIP net.IP) (result EndpointResult)
+type LookupEndpoint func(indexKey string, clientIP net.IP) (result LocalEndpoint)
 
 type LookupFunc func(indexKey string, clientIP net.IP) ([]string, endpoint.TTL)
 
@@ -145,24 +145,17 @@ func endpointHostnameIndexFunc(obj interface{}) ([]string, error) {
 	return hostnames, nil
 }
 
-func (ctrl *KubeController) getEndpointByName(hostName string, clientIP net.IP) (result EndpointResult) {
-	log.Infof("Index key %+v", hostName)
-	objs, err := ctrl.epc.GetIndexer().ByIndex(endpointHostnameIndex, strings.ToLower(hostName))
-	if err != nil {
-		return result
-	}
+func (ctrl *KubeController) getEndpointByName(host string, clientIP net.IP) (lep LocalEndpoint) {
+	log.Infof("Index key %+v", host)
+	objs, _ := ctrl.epc.GetIndexer().ByIndex(endpointHostnameIndex, strings.ToLower(host))
 	for _, obj := range objs {
 		ep := obj.(*endpoint.DNSEndpoint)
-		if ep == nil {
-			return result
-		}
-		for _, e := range ep.Spec.Endpoints {
-			if e.DNSName == hostName {
-				return newEndpoint(e, clientIP, hostName)
-			}
+		lep = newEndpoint(ep, clientIP, host)
+		if !lep.isEmpty() {
+			break
 		}
 	}
-	return result
+	return lep
 }
 
 type geo struct {

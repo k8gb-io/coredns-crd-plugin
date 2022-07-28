@@ -7,26 +7,40 @@ import (
 	"sigs.k8s.io/external-dns/endpoint"
 )
 
-type EndpointResult struct {
+type LocalEndpoint struct {
 	Targets []string
 	TTL     endpoint.TTL
 	Labels  map[string]string
 	DNSName string
 }
 
-func newEndpoint(ep *endpoint.Endpoint, ip net.IP, host string) (result EndpointResult) {
-	result = EndpointResult{}
-	if ep == nil {
-		return result
+func newEndpoint(ep *endpoint.DNSEndpoint, ip net.IP, host string) (result LocalEndpoint) {
+	result = LocalEndpoint{}
+	for _, e := range ep.Spec.Endpoints {
+		if e.DNSName == host {
+			result.DNSName = host
+			result.Labels = e.Labels
+			result.TTL = e.RecordTTL
+			result.Targets = e.Targets
+			log.Info("newEndpoint: ",e.DNSName," LABELS: ", e.Labels)
+			if e.Labels["strategy"] == "geoip" {
+				log.Info("newEndpoint: GEO")
+				targets := extractGeo(e, ip)
+				if len(targets) > 0 {
+					result.Targets = targets
+				}
+				log.Info("newEndpoint:",result.Targets," ",ip.String())
+			} else {
+				log.Info("newEndpoint: NOGEO")
+			}
+			break
+		}
 	}
-	result.Targets = ep.Targets
-	if ep.Labels["strategy"] == "geoip" {
-		result.Targets = extractGeo(ep, ip)
-	}
-	result.Labels = ep.Labels
-	result.DNSName = host
-	result.TTL = ep.RecordTTL
 	return result
+}
+
+func (lep LocalEndpoint) isEmpty() bool {
+	return len(lep.Targets) == 0 && (len(lep.Labels) == 0) && (lep.TTL == 0)
 }
 
 func extractGeo(endpoint *endpoint.Endpoint, clientIP net.IP) (result []string) {

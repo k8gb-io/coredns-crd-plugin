@@ -172,6 +172,10 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 	// Stop once we've found at least one match
 	for _, resource := range gw.Resources {
 		addrs, ttl = resource.Lookup2(indexKey, clientIP)
+		ep := resource.Lookup(indexKey, clientIP)
+		fmt.Printf("[addrs: %v, TTL: %v], [EP: %v]\n", addrs, ttl, ep)
+		addrs = ep.Targets
+		ttl = ep.TTL
 		if len(addrs) > 0 {
 			break
 		}

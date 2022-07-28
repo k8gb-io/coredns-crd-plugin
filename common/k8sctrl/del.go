@@ -21,11 +21,16 @@ func fetchEndpointTargets(endpoints []*endpoint.Endpoint, host string, ip net.IP
 	for _, ep := range endpoints {
 		if ep.DNSName == host {
 			ttl = ep.RecordTTL
+			log.Info("oldone: ",ep.DNSName," LABELS: ", ep.Labels)
 			if ep.Labels["strategy"] == "geoip" {
+				log.Info("oldone: GEO")
 				results = extractGeo(ep, ip)
+				log.Info("oldone:",results," ",ip.String())
 				if len(results) > 0 {
 					return
 				}
+			} else {
+				log.Info("oldone: NOGEO")
 			}
 			results = ep.Targets
 		}
