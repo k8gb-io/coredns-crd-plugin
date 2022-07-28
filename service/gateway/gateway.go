@@ -39,19 +39,6 @@ var log = clog.NewWithPlugin(thisPlugin)
 
 const defaultSvc = "external-dns.kube-system"
 
-type lookupFunc func(indexKey string, clientIP net.IP) ([]string, endpoint.TTL)
-
-type resourceWithIndex struct {
-	name   string
-	lookup lookupFunc
-}
-
-var orderedResources = []*resourceWithIndex{
-	{
-		name: "DNSEndpoint",
-	},
-}
-
 var (
 	ttlLowDefault     = uint32(60)
 	ttlHighDefault    = uint32(3600)
@@ -165,27 +152,21 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 		}
 	}
 
-	var addrs []string
-	var ttl endpoint.TTL
-
+	var ep k8sctrl.LocalDNSEndpoint
 	// Iterate over supported resources and lookup DNS queries
 	// Stop once we've found at least one match
 	for _, resource := range gw.Resources {
-		addrs, ttl = resource.Lookup2(indexKey, clientIP)
-		ep := resource.Lookup(indexKey, clientIP)
-		fmt.Printf("[addrs: %v, TTL: %v], [EP: %v]\n", addrs, ttl, ep)
-		addrs = ep.Targets
-		ttl = ep.TTL
-		if len(addrs) > 0 {
+		ep = resource.Lookup(indexKey, clientIP)
+		if len(ep.Targets) > 0 {
 			break
 		}
 	}
-	log.Debugf("Computed response addresses %v", addrs)
+	log.Debugf("Computed response addresses %v", ep.Targets)
 
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
 
-	if len(addrs) == 0 {
+	if len(ep.Targets) == 0 {
 		m.Rcode = dns.RcodeNameError
 		m.Ns = []dns.RR{gw.soa(state)}
 		if err := w.WriteMsg(m); err != nil {
@@ -196,9 +177,9 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 
 	switch state.QType() {
 	case dns.TypeA:
-		m.Answer = gw.A(state, targetToIP(addrs), ttl)
+		m.Answer = gw.A(state, targetToIP(ep.Targets), ep.TTL)
 	case dns.TypeTXT:
-		m.Answer = gw.TXT(state, addrs, ttl)
+		m.Answer = gw.TXT(state, ep.Targets, ep.TTL)
 	default:
 		m.Ns = []dns.RR{gw.soa(state)}
 	}
@@ -252,18 +233,17 @@ func (gw *Gateway) SelfAddress(state request.Request) (records []dns.RR) {
 		index = defaultSvc
 	}
 
-	var addrs []string
-	var ttl endpoint.TTL
+	var ep k8sctrl.LocalDNSEndpoint
 	for _, resource := range gw.Resources {
-		addrs, ttl = resource.Lookup2(index, net.ParseIP(state.IP()))
-		if len(addrs) > 0 {
+		ep = resource.Lookup(index, net.ParseIP(state.IP()))
+		if len(ep.Targets) > 0 {
 			break
 		}
 	}
 
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
-	return gw.A(state, targetToIP(addrs), ttl)
+	return gw.A(state, targetToIP(ep.Targets), ep.TTL)
 }
 
 func (gw *Gateway) SetTTLLow(ttl uint32) {

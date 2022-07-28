@@ -25,14 +25,13 @@ type KubeController struct {
 	epc         cache.SharedIndexInformer
 }
 
-type LookupEndpoint func(indexKey string, clientIP net.IP) (result LocalEndpoint)
+type LookupEndpoint func(indexKey string, clientIP net.IP) (result LocalDNSEndpoint)
 
 type LookupFunc func(indexKey string, clientIP net.IP) ([]string, endpoint.TTL)
 
 type ResourceWithIndex struct {
-	Name    string
-	Lookup  LookupEndpoint
-	Lookup2 LookupFunc
+	Name   string
+	Lookup LookupEndpoint
 }
 
 const (
@@ -68,7 +67,6 @@ func NewKubeController(ctx context.Context, c *dnsendpoint.ExtDNSClient, label s
 		cache.Indexers{endpointHostnameIndex: endpointHostnameIndexFunc},
 	)
 	ctrl.epc = endpointController
-	dnsEndpoint.Lookup2 = ctrl.lookupEndpointIndex
 	dnsEndpoint.Lookup = ctrl.getEndpointByName
 	ctrl.controllers = append(ctrl.controllers, endpointController)
 	return ctrl
@@ -145,7 +143,7 @@ func endpointHostnameIndexFunc(obj interface{}) ([]string, error) {
 	return hostnames, nil
 }
 
-func (ctrl *KubeController) getEndpointByName(host string, clientIP net.IP) (lep LocalEndpoint) {
+func (ctrl *KubeController) getEndpointByName(host string, clientIP net.IP) (lep LocalDNSEndpoint) {
 	log.Infof("Index key %+v", host)
 	objs, _ := ctrl.epc.GetIndexer().ByIndex(endpointHostnameIndex, strings.ToLower(host))
 	for _, obj := range objs {
@@ -161,5 +159,3 @@ func (ctrl *KubeController) getEndpointByName(host string, clientIP net.IP) (lep
 type geo struct {
 	DC string `maxminddb:"datacenter"`
 }
-
-

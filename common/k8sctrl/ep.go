@@ -7,31 +7,26 @@ import (
 	"sigs.k8s.io/external-dns/endpoint"
 )
 
-type LocalEndpoint struct {
+type LocalDNSEndpoint struct {
 	Targets []string
 	TTL     endpoint.TTL
 	Labels  map[string]string
 	DNSName string
 }
 
-func newEndpoint(ep *endpoint.DNSEndpoint, ip net.IP, host string) (result LocalEndpoint) {
-	result = LocalEndpoint{}
+func newEndpoint(ep *endpoint.DNSEndpoint, ip net.IP, host string) (result LocalDNSEndpoint) {
+	result = LocalDNSEndpoint{}
 	for _, e := range ep.Spec.Endpoints {
 		if e.DNSName == host {
 			result.DNSName = host
 			result.Labels = e.Labels
 			result.TTL = e.RecordTTL
 			result.Targets = e.Targets
-			log.Info("newEndpoint: ",e.DNSName," LABELS: ", e.Labels)
 			if e.Labels["strategy"] == "geoip" {
-				log.Info("newEndpoint: GEO")
 				targets := extractGeo(e, ip)
 				if len(targets) > 0 {
 					result.Targets = targets
 				}
-				log.Info("newEndpoint:",result.Targets," ",ip.String())
-			} else {
-				log.Info("newEndpoint: NOGEO")
 			}
 			break
 		}
@@ -39,7 +34,7 @@ func newEndpoint(ep *endpoint.DNSEndpoint, ip net.IP, host string) (result Local
 	return result
 }
 
-func (lep LocalEndpoint) isEmpty() bool {
+func (lep LocalDNSEndpoint) isEmpty() bool {
 	return len(lep.Targets) == 0 && (len(lep.Labels) == 0) && (lep.TTL == 0)
 }
 
@@ -79,4 +74,3 @@ func extractGeo(endpoint *endpoint.Endpoint, clientIP net.IP) (result []string) 
 	}
 	return result
 }
-
