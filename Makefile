@@ -20,7 +20,7 @@ BIN := k8s_crd
 REGISTRY ?= docker.io/absaoss
 
 # Tag 
-TAG ?= latest
+TAG ?= latest101
 
 # Image URL to use all building/pushing image targets
 IMG ?= $(REGISTRY)/$(BIN)
@@ -85,4 +85,4 @@ terratest: deploy-app
 	cd terratest/test/ && go test -v
 
 .PHONY: redeploy
-redeploy: build deploy-app
+redeploy: lint build deploy-app

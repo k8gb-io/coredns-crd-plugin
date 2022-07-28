@@ -27,8 +27,6 @@ type KubeController struct {
 
 type LookupEndpoint func(indexKey string, clientIP net.IP) (result LocalDNSEndpoint)
 
-type LookupFunc func(indexKey string, clientIP net.IP) ([]string, endpoint.TTL)
-
 type ResourceWithIndex struct {
 	Name   string
 	Lookup LookupEndpoint
@@ -148,7 +146,7 @@ func (ctrl *KubeController) getEndpointByName(host string, clientIP net.IP) (lep
 	objs, _ := ctrl.epc.GetIndexer().ByIndex(endpointHostnameIndex, strings.ToLower(host))
 	for _, obj := range objs {
 		ep := obj.(*endpoint.DNSEndpoint)
-		lep = newEndpoint(ep, clientIP, host)
+		lep = extractLocalEndpoint(ep, clientIP, host)
 		if !lep.isEmpty() {
 			break
 		}

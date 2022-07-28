@@ -19,12 +19,11 @@ package gateway
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"os"
-	"strings"
 
 	"github.com/AbsaOSS/k8s_crd/common/k8sctrl"
+	"github.com/AbsaOSS/k8s_crd/common/netutils"
 
 	"github.com/coredns/coredns/plugin"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
@@ -48,12 +47,12 @@ var (
 
 // Gateway stores all runtime configuration of a plugin
 type Gateway struct {
-	Next             plugin.Handler
-	Zones            []string
+	Next  plugin.Handler
+	Zones []string
+	// todo: private ?
 	Resources        []*k8sctrl.ResourceWithIndex
 	ttlLow           uint32
 	ttlHigh          uint32
-	Controller       *k8sctrl.KubeController
 	apex             string
 	hostmaster       string
 	Filter           string
@@ -72,7 +71,6 @@ func NewGateway() *Gateway {
 }
 
 func lookupResource(resource string) *k8sctrl.ResourceWithIndex {
-
 	for _, r := range k8sctrl.OrderedResources {
 		if r.Name == resource {
 			return r
@@ -82,35 +80,12 @@ func lookupResource(resource string) *k8sctrl.ResourceWithIndex {
 }
 
 func (gw *Gateway) UpdateResources(newResources []string) {
-
 	gw.Resources = []*k8sctrl.ResourceWithIndex{}
-
 	for _, name := range newResources {
 		if resource := lookupResource(name); resource != nil {
 			gw.Resources = append(gw.Resources, resource)
 		}
 	}
-}
-
-func extractEdnsSubnet(msg *dns.Msg) net.IP {
-	edns := msg.IsEdns0()
-	if edns == nil {
-		return nil
-	}
-	for _, o := range edns.Option {
-		if o.Option() == dns.EDNS0SUBNET {
-			subnet := o.(*dns.EDNS0_SUBNET)
-			return subnet.Address
-		}
-	}
-	return nil
-}
-
-func targetToIP(targets []string) (ips []net.IP) {
-	for _, ip := range targets {
-		ips = append(ips, net.ParseIP(ip))
-	}
-	return
 }
 
 // ServeDNS implements the plugin.Handle interface.
@@ -121,7 +96,7 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 
 	qname := state.QName()
 	zone := plugin.Zones(gw.Zones).Matches(qname)
-	clientIP = extractEdnsSubnet(r)
+	clientIP = netutils.ExtractEdnsSubnet(r)
 
 	if zone == "" {
 		log.Infof("Request %s has not matched any zones %v", qname, gw.Zones)
@@ -131,14 +106,9 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 	state.Zone = zone
 
 	// Computing keys to look up in cache
-	indexKey := stripClosingDot(state.QName())
+	indexKey := netutils.StripClosingDot(state.QName())
 
 	log.Infof("Computed Index Keys %v", indexKey)
-
-	if !gw.Controller.HasSynced() {
-		// TODO maybe there's a better way to do this? e.g. return an error back to the client?
-		return dns.RcodeServerFailure, plugin.Error(thisPlugin, fmt.Errorf("could not sync required resources"))
-	}
 
 	for _, z := range gw.Zones {
 		if state.Name() == z { // apex query
@@ -177,7 +147,7 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 
 	switch state.QType() {
 	case dns.TypeA:
-		m.Answer = gw.A(state, targetToIP(ep.Targets), ep.TTL)
+		m.Answer = gw.A(state, netutils.TargetToIP(ep.Targets), ep.TTL)
 	case dns.TypeTXT:
 		m.Answer = gw.TXT(state, ep.Targets, ep.TTL)
 	default:
@@ -243,7 +213,7 @@ func (gw *Gateway) SelfAddress(state request.Request) (records []dns.RR) {
 
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
-	return gw.A(state, targetToIP(ep.Targets), ep.TTL)
+	return gw.A(state, netutils.TargetToIP(ep.Targets), ep.TTL)
 }
 
 func (gw *Gateway) SetTTLLow(ttl uint32) {
@@ -256,12 +226,4 @@ func (gw *Gateway) SetTTLHigh(ttl uint32) {
 
 func (gw *Gateway) SetApex(apex string) {
 	gw.apex = apex
-}
-
-// Strips the closing dot unless it's "."
-func stripClosingDot(s string) string {
-	if len(s) > 1 {
-		return strings.TrimSuffix(s, ".")
-	}
-	return s
 }

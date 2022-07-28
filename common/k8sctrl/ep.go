@@ -14,7 +14,7 @@ type LocalDNSEndpoint struct {
 	DNSName string
 }
 
-func newEndpoint(ep *endpoint.DNSEndpoint, ip net.IP, host string) (result LocalDNSEndpoint) {
+func extractLocalEndpoint(ep *endpoint.DNSEndpoint, ip net.IP, host string) (result LocalDNSEndpoint) {
 	result = LocalDNSEndpoint{}
 	for _, e := range ep.Spec.Endpoints {
 		if e.DNSName == host {
@@ -23,7 +23,7 @@ func newEndpoint(ep *endpoint.DNSEndpoint, ip net.IP, host string) (result Local
 			result.TTL = e.RecordTTL
 			result.Targets = e.Targets
 			if e.Labels["strategy"] == "geoip" {
-				targets := extractGeo(e, ip)
+				targets := result.extractGeo(e, ip)
 				if len(targets) > 0 {
 					result.Targets = targets
 				}
@@ -38,7 +38,7 @@ func (lep LocalDNSEndpoint) isEmpty() bool {
 	return len(lep.Targets) == 0 && (len(lep.Labels) == 0) && (lep.TTL == 0)
 }
 
-func extractGeo(endpoint *endpoint.Endpoint, clientIP net.IP) (result []string) {
+func (lep LocalDNSEndpoint) extractGeo(endpoint *endpoint.Endpoint, clientIP net.IP) (result []string) {
 	db, err := maxminddb.Open("geoip.mmdb")
 	if err != nil {
 		log.Fatal(err)

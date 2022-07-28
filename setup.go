@@ -46,12 +46,15 @@ func setup(c *caddy.Controller) error {
 		return plugin.Error(thisPlugin, err)
 	}
 
-	gw.Controller, err = gateway.RunKubeController(context.Background(), gw)
+	k8sCRD := NewK8sCRD()
+	// todo: Filter to k8scrd only
+	k8sCRD.Filter = gw.Filter
+	// todo: init in constructor func
+	k8sCRD.Controller, err = RunKubeController(context.Background(), k8sCRD)
 	if err != nil {
 		return plugin.Error(thisPlugin, err)
 	}
 	gw.ExternalAddrFunc = gw.SelfAddress
-	k8sCRD := NewK8sCRD()
 	_ = k8sCRD.container.Add(gw)
 	_ = k8sCRD.container.Add(wrr.NewWeightRoundRobin())
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
