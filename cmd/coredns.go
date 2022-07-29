@@ -25,29 +25,12 @@ import (
 	"github.com/coredns/coredns/coremain"
 )
 
-var dropPlugins = map[string]bool{
-	"kubernetes":   true,
-	"k8s_external": true,
-}
-
 func init() {
-	var directives []string
-	var alreadyAdded bool
-
-	for _, name := range dnsserver.Directives {
-
-		if dropPlugins[name] {
-			if !alreadyAdded {
-				directives = append(directives, "k8s_crd")
-				alreadyAdded = true
-			}
-			continue
-		}
-		directives = append(directives, name)
-	}
-
-	dnsserver.Directives = directives
-
+	p := newPluginManager(dnsserver.Directives)
+	p.insertBefore("k8s_crd", "kubernetes")
+	p.remove("kubernetes")
+	p.remove("k8s_external")
+	dnsserver.Directives = p.get()
 }
 
 func main() {
