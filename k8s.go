@@ -19,14 +19,14 @@ package k8scrd
 
 import (
 	"context"
-	"os"
+
+	restclient "k8s.io/client-go/rest"
 
 	"github.com/AbsaOSS/k8s_crd/common/k8sctrl"
 	dnsendpoint "github.com/AbsaOSS/k8s_crd/extdns"
 
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 // KubeController stores the current runtime configuration and cache
@@ -38,23 +38,14 @@ type KubeController struct {
 }
 
 // RunKubeController kicks off the k8s controllers
-func RunKubeController(ctx context.Context, filter string) (*k8sctrl.KubeController, error) {
-	// config, err := rest.InClusterConfig()
+func RunKubeController(ctx context.Context, cfg *restclient.Config, filter string) (*k8sctrl.KubeController, error) {
 
-	// Helpful to run coredns locally
-	kubeconfig := os.Getenv("KUBECONFIG")
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-
+	err := dnsendpoint.AddToScheme(scheme.Scheme)
 	if err != nil {
 		return nil, err
 	}
 
-	err = dnsendpoint.AddToScheme(scheme.Scheme)
-	if err != nil {
-		return nil, err
-	}
-
-	kubeClient, err := dnsendpoint.NewForConfig(config)
+	kubeClient, err := dnsendpoint.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
 	}

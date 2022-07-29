@@ -18,8 +18,13 @@ type K8sCRD struct {
 	container  service.PluginContainer
 }
 
-func NewK8sCRD(filter string) (*K8sCRD, error) {
-	ctrl, err := RunKubeController(context.Background(), filter)
+func NewK8sCRD(ct configType, filter string) (*K8sCRD, error) {
+	cfg, rct, err := configFactory(ct)
+	if err != nil {
+		return nil, err
+	}
+	log.Infof("Running '%s' kube controller", rct)
+	ctrl, err := RunKubeController(context.Background(), cfg, filter)
 	if err != nil {
 		return nil, err
 	}

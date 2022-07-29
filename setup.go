@@ -40,12 +40,12 @@ func init() {
 
 func setup(c *caddy.Controller) error {
 
-	gw, err := parse(c)
+	gw, cfgType, err := parse(c)
 	if err != nil {
 		return plugin.Error(thisPlugin, err)
 	}
 
-	k8sCRD, err := NewK8sCRD(gw.Filter)
+	k8sCRD, err := NewK8sCRD(configType(cfgType), gw.Filter)
 	if err != nil {
 		return plugin.Error(thisPlugin, err)
 	}
@@ -70,9 +70,9 @@ func parseTTL(opt, arg string) (uint32, error) {
 	return uint32(t), nil
 }
 
-func parse(c *caddy.Controller) (*gateway.Gateway, error) {
+func parse(c *caddy.Controller) (*gateway.Gateway, string, error) {
 	gw := gateway.NewGateway()
-
+	k8s := ""
 	for c.Next() {
 		gw.Zones = plugin.OriginsFromArgsOrServerBlock(c.RemainingArgs(), c.ServerBlockKeys)
 
@@ -80,7 +80,7 @@ func parse(c *caddy.Controller) (*gateway.Gateway, error) {
 			key := c.Val()
 			args := c.RemainingArgs()
 			if len(args) == 0 {
-				return nil, c.ArgErr()
+				return nil, k8s, c.ArgErr()
 			}
 			switch key {
 			case "resources":
@@ -104,10 +104,12 @@ func parse(c *caddy.Controller) (*gateway.Gateway, error) {
 				}
 			case "apex":
 				gw.SetApex(args[0])
+			case "k8s":
+				k8s = args[0]
 			default:
-				return nil, c.Errf("Unknown property '%s'", c.Val())
+				return nil, k8s, c.Errf("Unknown property '%s'", c.Val())
 			}
 		}
 	}
-	return gw, nil
+	return gw, k8s, nil
 }
