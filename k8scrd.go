@@ -14,19 +14,24 @@ import (
 type K8sCRD struct {
 	Next       plugin.Handler
 	Filter     string
-	Controller *k8sctrl.KubeController
+	controller *k8sctrl.KubeController
 	container  service.PluginContainer
 }
 
-func NewK8sCRD() *K8sCRD {
-	return &K8sCRD{
-		container: service.NewCommonContainer(),
+func NewK8sCRD(filter string) (*K8sCRD, error) {
+	ctrl, err := RunKubeController(context.Background(), filter)
+	if err != nil {
+		return nil, err
 	}
+	return &K8sCRD{
+		container:  service.NewCommonContainer(),
+		controller: ctrl,
+	}, nil
 }
 
 // ServeDNS implements the plugin.Handle interface.
 func (p *K8sCRD) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
-	if !p.Controller.HasSynced() {
+	if !p.controller.HasSynced() {
 		// TODO maybe there's a better way to do this? e.g. return an error back to the client?
 		return dns.RcodeServerFailure, plugin.Error(thisPlugin, fmt.Errorf("could not sync required resources"))
 	}

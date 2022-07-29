@@ -38,7 +38,7 @@ type KubeController struct {
 }
 
 // RunKubeController kicks off the k8s controllers
-func RunKubeController(ctx context.Context, c *K8sCRD) (*k8sctrl.KubeController, error) {
+func RunKubeController(ctx context.Context, filter string) (*k8sctrl.KubeController, error) {
 	// config, err := rest.InClusterConfig()
 
 	// Helpful to run coredns locally
@@ -59,7 +59,7 @@ func RunKubeController(ctx context.Context, c *K8sCRD) (*k8sctrl.KubeController,
 		return nil, err
 	}
 
-	ctrl := k8sctrl.NewKubeController(ctx, kubeClient, c.Filter)
+	ctrl := k8sctrl.NewKubeController(ctx, kubeClient, filter)
 
 	go ctrl.Run()
 
