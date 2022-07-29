@@ -21,15 +21,29 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/AbsaOSS/k8s_crd/service/gateway"
+	"github.com/AbsaOSS/k8s_crd/service/wrr"
+
 	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
 )
 
-var log = clog.NewWithPlugin(thisPlugin)
+type args struct {
+	annotation     string
+	apex           string
+	filter         string
+	kubecontroller string
+	negttl         uint32
+	resources      []string
+	ttl            uint32
+	zones          []string
+}
 
 const thisPlugin = "k8s_crd"
+
+var log = clog.NewWithPlugin(thisPlugin)
 
 func init() {
 	plugin.Register(thisPlugin, setup)
@@ -46,8 +60,9 @@ func setup(c *caddy.Controller) error {
 	if err != nil {
 		return plugin.Error(thisPlugin, err)
 	}
-	_ = k8sCRD.container.Add(rawArgs.provideGatewayService())
-	_ = k8sCRD.container.Add(rawArgs.provideWrrService())
+	gwopts := gateway.NewGatewayOpts(rawArgs.annotation, rawArgs.apex, rawArgs.ttl, rawArgs.negttl, rawArgs.resources, rawArgs.zones)
+	_ = k8sCRD.container.Add(gateway.NewGateway(gwopts))
+	_ = k8sCRD.container.Add(wrr.NewWeightRoundRobin())
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 		k8sCRD.Next = next
 		return k8sCRD
