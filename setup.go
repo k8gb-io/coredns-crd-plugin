@@ -72,7 +72,7 @@ func parseTTL(opt, arg string) (uint32, error) {
 
 func parse(c *caddy.Controller) (*gateway.Gateway, string, error) {
 	gw := gateway.NewGateway()
-	k8s := ""
+	kubecontroller := ""
 	for c.Next() {
 		gw.Zones = plugin.OriginsFromArgsOrServerBlock(c.RemainingArgs(), c.ServerBlockKeys)
 
@@ -80,7 +80,7 @@ func parse(c *caddy.Controller) (*gateway.Gateway, string, error) {
 			key := c.Val()
 			args := c.RemainingArgs()
 			if len(args) == 0 {
-				return nil, k8s, c.ArgErr()
+				return nil, kubecontroller, c.ArgErr()
 			}
 			switch key {
 			case "resources":
@@ -104,12 +104,13 @@ func parse(c *caddy.Controller) (*gateway.Gateway, string, error) {
 				}
 			case "apex":
 				gw.SetApex(args[0])
-			case "k8s":
-				k8s = args[0]
+			case "kubecontroller":
+				log.Infof("kubecontroller: %+v", args)
+				kubecontroller = args[0]
 			default:
-				return nil, k8s, c.Errf("Unknown property '%s'", c.Val())
+				return nil, kubecontroller, c.Errf("Unknown property '%s'", c.Val())
 			}
 		}
 	}
-	return gw, k8s, nil
+	return gw, kubecontroller, nil
 }

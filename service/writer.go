@@ -7,8 +7,8 @@ import (
 )
 
 // containerResponseWriter writer allows access to Message object (written by w.WriteMsg()) which is hidden by dns.ResponseWriter.
-// The containerResponseWriter wraps any ResponseWriter and add getMsg function which provides Written message
-// the struct is private, no access outside of package
+// The containerResponseWriter wraps any ResponseWriter and add getMsg function which provides Written message, so the
+// dns.Msg is accessible within the container pipeline.
 type containerResponseWriter struct {
 	w          dns.ResponseWriter
 	msg        *dns.Msg
