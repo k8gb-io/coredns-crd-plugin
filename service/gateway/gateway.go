@@ -47,10 +47,8 @@ var (
 
 // Gateway stores all runtime configuration of a plugin
 type Gateway struct {
-	Next  plugin.Handler
-	Zones []string
-	// todo: private ?
-	Resources        []*k8sctrl.ResourceWithIndex
+	Zones            []string
+	resources        []*k8sctrl.ResourceWithIndex
 	ttlLow           uint32
 	ttlHigh          uint32
 	apex             string
@@ -63,7 +61,7 @@ type Gateway struct {
 func NewGateway() *Gateway {
 	return &Gateway{
 		apex:       defaultApex,
-		Resources:  k8sctrl.OrderedResources,
+		resources:  k8sctrl.OrderedResources,
 		ttlLow:     ttlLowDefault,
 		ttlHigh:    ttlHighDefault,
 		hostmaster: defaultHostmaster,
@@ -80,10 +78,10 @@ func lookupResource(resource string) *k8sctrl.ResourceWithIndex {
 }
 
 func (gw *Gateway) UpdateResources(newResources []string) {
-	gw.Resources = []*k8sctrl.ResourceWithIndex{}
+	gw.resources = []*k8sctrl.ResourceWithIndex{}
 	for _, name := range newResources {
 		if resource := lookupResource(name); resource != nil {
-			gw.Resources = append(gw.Resources, resource)
+			gw.resources = append(gw.resources, resource)
 		}
 	}
 }
@@ -125,7 +123,7 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 	var ep k8sctrl.LocalDNSEndpoint
 	// Iterate over supported resources and lookup DNS queries
 	// Stop once we've found at least one match
-	for _, resource := range gw.Resources {
+	for _, resource := range gw.resources {
 		ep = resource.Lookup(indexKey, clientIP)
 		if len(ep.Targets) > 0 {
 			break
@@ -204,7 +202,7 @@ func (gw *Gateway) SelfAddress(state request.Request) (records []dns.RR) {
 	}
 
 	var ep k8sctrl.LocalDNSEndpoint
-	for _, resource := range gw.Resources {
+	for _, resource := range gw.resources {
 		ep = resource.Lookup(index, net.ParseIP(state.IP()))
 		if len(ep.Targets) > 0 {
 			break

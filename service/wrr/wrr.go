@@ -13,15 +13,14 @@ import (
 )
 
 type WeightRoundRobin struct {
-	// todo: private?
-	Resources []*k8sctrl.ResourceWithIndex
+	resources []*k8sctrl.ResourceWithIndex
 }
 
 const thisPlugin = "wrr"
 
 func NewWeightRoundRobin() *WeightRoundRobin {
 	return &WeightRoundRobin{
-		Resources: k8sctrl.OrderedResources,
+		resources: k8sctrl.OrderedResources,
 	}
 }
 
@@ -34,7 +33,7 @@ func (wrr *WeightRoundRobin) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	a, _, _ := parseAnswerSection(r.Answer)
 
 	var ep k8sctrl.LocalDNSEndpoint
-	for _, resource := range wrr.Resources {
+	for _, resource := range wrr.resources {
 		ep = resource.Lookup(indexKey, clientIP)
 		if len(ep.Targets) > 0 {
 			break
