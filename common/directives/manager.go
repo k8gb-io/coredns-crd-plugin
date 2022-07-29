@@ -1,19 +1,19 @@
-package main
+package directives
 
 import "fmt"
 
-type pluginManager struct {
+type Manager struct {
 	plugins []string
 }
 
-func newPluginManager(plugins []string) *pluginManager {
-	d := new(pluginManager)
+func NewDirectivesManager(plugins []string) *Manager {
+	d := new(Manager)
 	d.plugins = make([]string, len(plugins))
 	copy(d.plugins, plugins)
 	return d
 }
 
-func (d *pluginManager) remove(plugin string) {
+func (d *Manager) Remove(plugin string) {
 	var x []string
 	for _, v := range d.plugins {
 		if v != plugin {
@@ -23,7 +23,7 @@ func (d *pluginManager) remove(plugin string) {
 	d.plugins = x
 }
 
-func (d *pluginManager) insertBefore(plugin, insertBefore string) {
+func (d *Manager) InsertBefore(plugin, insertBefore string) {
 	var x []string
 	for _, v := range d.plugins {
 		if v == insertBefore {
@@ -37,6 +37,6 @@ func (d *pluginManager) insertBefore(plugin, insertBefore string) {
 	d.plugins = x
 }
 
-func (d *pluginManager) get() []string {
+func (d *Manager) Get() []string {
 	return d.plugins
 }
