@@ -54,7 +54,6 @@ func setup(c *caddy.Controller) error {
 	if err != nil {
 		return plugin.Error(thisPlugin, err)
 	}
-	gw.ExternalAddrFunc = gw.SelfAddress
 	_ = k8sCRD.container.Add(gw)
 	_ = k8sCRD.container.Add(wrr.NewWeightRoundRobin())
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {

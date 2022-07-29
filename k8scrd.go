@@ -13,9 +13,9 @@ import (
 
 type K8sCRD struct {
 	Next       plugin.Handler
-	container  service.PluginContainer
 	Filter     string
 	Controller *k8sctrl.KubeController
+	container  service.PluginContainer
 }
 
 func NewK8sCRD() *K8sCRD {

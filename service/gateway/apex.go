@@ -37,7 +37,7 @@ func (gw *Gateway) serveApex(state request.Request) (int, error) {
 	case dns.TypeNS:
 		m.Answer = []dns.RR{gw.ns(state)}
 
-		addr := gw.ExternalAddrFunc(state)
+		addr := gw.externalAddrFunc(state)
 		for _, rr := range addr {
 			rr.Header().Ttl = gw.ttlHigh
 			rr.Header().Name = dnsutil.Join("ns1", gw.apex, state.QName())
@@ -82,7 +82,7 @@ func (gw *Gateway) serveSubApex(state request.Request) (int, error) {
 			return 0, nil
 		}
 
-		addr := gw.ExternalAddrFunc(state)
+		addr := gw.externalAddrFunc(state)
 		for _, rr := range addr {
 			rr.Header().Ttl = gw.ttlHigh
 			rr.Header().Name = state.QName()
