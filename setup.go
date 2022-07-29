@@ -21,9 +21,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/AbsaOSS/k8s_crd/service/gateway"
-	"github.com/AbsaOSS/k8s_crd/service/wrr"
-
 	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
@@ -40,17 +37,17 @@ func init() {
 
 func setup(c *caddy.Controller) error {
 
-	gw, cfgType, err := parse(c)
+	rawArgs, err := parse(c)
 	if err != nil {
 		return plugin.Error(thisPlugin, err)
 	}
 
-	k8sCRD, err := NewK8sCRD(configType(cfgType), gw.Filter)
+	k8sCRD, err := NewK8sCRD(configType(rawArgs.kubecontroller), rawArgs.filter)
 	if err != nil {
 		return plugin.Error(thisPlugin, err)
 	}
-	_ = k8sCRD.container.Add(gw)
-	_ = k8sCRD.container.Add(wrr.NewWeightRoundRobin())
+	_ = k8sCRD.container.Add(rawArgs.provideGatewayService())
+	_ = k8sCRD.container.Add(rawArgs.provideWrrService())
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 		k8sCRD.Next = next
 		return k8sCRD
@@ -70,47 +67,46 @@ func parseTTL(opt, arg string) (uint32, error) {
 	return uint32(t), nil
 }
 
-func parse(c *caddy.Controller) (*gateway.Gateway, string, error) {
-	gw := gateway.NewGateway()
-	kubecontroller := ""
+func parse(c *caddy.Controller) (args, error) {
+	a := args{}
 	for c.Next() {
-		gw.Zones = plugin.OriginsFromArgsOrServerBlock(c.RemainingArgs(), c.ServerBlockKeys)
+		a.zones = plugin.OriginsFromArgsOrServerBlock(c.RemainingArgs(), c.ServerBlockKeys)
 
 		for c.NextBlock() {
 			key := c.Val()
 			args := c.RemainingArgs()
 			if len(args) == 0 {
-				return nil, kubecontroller, c.ArgErr()
+				return a, c.ArgErr()
 			}
 			switch key {
 			case "resources":
-				gw.UpdateResources(args)
+				a.resources = args
 			case "filter":
 				log.Infof("Filter: %+v", args)
-				gw.Filter = args[0]
+				a.filter = args[0]
 			case "annotation":
 				log.Infof("annotation: %+v", args)
-				gw.Annotation = args[0]
+				a.annotation = args[0]
 			case "ttl":
 				ttl, err := parseTTL(c.Val(), args[0])
 				if err != nil {
-					gw.SetTTLLow(ttl)
+					a.ttl = ttl
 				}
 			case "negttl":
 				log.Infof("negTTL: %+v", args[0])
 				negttl, err := parseTTL(c.Val(), args[0])
 				if err == nil {
-					gw.SetTTLHigh(negttl)
+					a.negttl = negttl
 				}
 			case "apex":
-				gw.SetApex(args[0])
+				a.apex = args[0]
 			case "kubecontroller":
 				log.Infof("kubecontroller: %+v", args)
-				kubecontroller = args[0]
+				a.kubecontroller = args[0]
 			default:
-				return nil, kubecontroller, c.Errf("Unknown property '%s'", c.Val())
+				return a, c.Errf("Unknown property '%s'", c.Val())
 			}
 		}
 	}
-	return gw, kubecontroller, nil
+	return a, nil
 }

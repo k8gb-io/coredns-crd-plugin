@@ -70,15 +70,6 @@ func NewKubeController(ctx context.Context, c *dnsendpoint.ExtDNSClient, label s
 	return ctrl
 }
 
-func lookupResource(resource string) *ResourceWithIndex {
-	for _, r := range OrderedResources {
-		if r.Name == resource {
-			return r
-		}
-	}
-	return nil
-}
-
 func (ctrl *KubeController) UpdateResources(newResources []string) {
 	ctrl.resources = []*ResourceWithIndex{}
 	for _, name := range newResources {
@@ -154,6 +145,21 @@ func (ctrl *KubeController) getEndpointByName(host string, clientIP net.IP) (lep
 	return lep
 }
 
-type geo struct {
-	DC string `maxminddb:"datacenter"`
+func BuildResources(strings []string) (resources []*ResourceWithIndex) {
+	resources = []*ResourceWithIndex{}
+	for _, name := range strings {
+		if resource := lookupResource(name); resource != nil {
+			resources = append(resources, resource)
+		}
+	}
+	return resources
+}
+
+func lookupResource(resource string) *ResourceWithIndex {
+	for _, r := range OrderedResources {
+		if r.Name == resource {
+			return r
+		}
+	}
+	return nil
 }

@@ -7,6 +7,10 @@ import (
 	"sigs.k8s.io/external-dns/endpoint"
 )
 
+type geo struct {
+	DC string `maxminddb:"datacenter"`
+}
+
 type LocalDNSEndpoint struct {
 	Targets []string
 	TTL     endpoint.TTL

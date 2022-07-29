@@ -39,8 +39,8 @@ func (gw *Gateway) serveApex(state request.Request) (int, error) {
 
 		addr := gw.externalAddrFunc(state)
 		for _, rr := range addr {
-			rr.Header().Ttl = gw.ttlHigh
-			rr.Header().Name = dnsutil.Join("ns1", gw.apex, state.QName())
+			rr.Header().Ttl = gw.opts.ttlHigh
+			rr.Header().Name = dnsutil.Join("ns1", gw.opts.apex, state.QName())
 			m.Extra = append(m.Extra, rr)
 		}
 	default:
@@ -84,7 +84,7 @@ func (gw *Gateway) serveSubApex(state request.Request) (int, error) {
 
 		addr := gw.externalAddrFunc(state)
 		for _, rr := range addr {
-			rr.Header().Ttl = gw.ttlHigh
+			rr.Header().Ttl = gw.opts.ttlHigh
 			rr.Header().Name = state.QName()
 			switch state.QType() {
 			case dns.TypeA:
@@ -118,23 +118,23 @@ func (gw *Gateway) serveSubApex(state request.Request) (int, error) {
 }
 
 func (gw *Gateway) soa(state request.Request) *dns.SOA {
-	header := dns.RR_Header{Name: state.Zone, Rrtype: dns.TypeSOA, Ttl: gw.ttlHigh, Class: dns.ClassINET}
+	header := dns.RR_Header{Name: state.Zone, Rrtype: dns.TypeSOA, Ttl: gw.opts.ttlHigh, Class: dns.ClassINET}
 
 	soa := &dns.SOA{Hdr: header,
-		Mbox:    dnsutil.Join(gw.hostmaster, gw.apex, state.Zone),
-		Ns:      dnsutil.Join("ns1", gw.apex, state.Zone),
+		Mbox:    dnsutil.Join(gw.opts.hostmaster, gw.opts.apex, state.Zone),
+		Ns:      dnsutil.Join("ns1", gw.opts.apex, state.Zone),
 		Serial:  uint32(time.Now().Truncate(time.Hour).Unix()),
 		Refresh: 7200,
 		Retry:   1800,
 		Expire:  86400,
-		Minttl:  gw.ttlHigh,
+		Minttl:  gw.opts.ttlHigh,
 	}
 	return soa
 }
 
 func (gw *Gateway) ns(state request.Request) *dns.NS {
-	header := dns.RR_Header{Name: state.Zone, Rrtype: dns.TypeNS, Ttl: gw.ttlHigh, Class: dns.ClassINET}
-	ns := &dns.NS{Hdr: header, Ns: dnsutil.Join("ns1", gw.apex, state.Zone)}
+	header := dns.RR_Header{Name: state.Zone, Rrtype: dns.TypeNS, Ttl: gw.opts.ttlHigh, Class: dns.ClassINET}
+	ns := &dns.NS{Hdr: header, Ns: dnsutil.Join("ns1", gw.opts.apex, state.Zone)}
 
 	return ns
 }

@@ -38,54 +38,18 @@ var log = clog.NewWithPlugin(thisPlugin)
 
 const defaultSvc = "external-dns.kube-system"
 
-var (
-	ttlLowDefault     = uint32(60)
-	ttlHighDefault    = uint32(3600)
-	defaultApex       = "dns"
-	defaultHostmaster = "hostmaster"
-)
-
 // Gateway stores all runtime configuration of a plugin
 type Gateway struct {
-	Annotation       string
-	Filter           string
-	Zones            []string
-	apex             string
 	externalAddrFunc func(request.Request) []dns.RR
-	hostmaster       string
-	resources        []*k8sctrl.ResourceWithIndex
-	ttlLow           uint32
-	ttlHigh          uint32
+	opts             Opts
 }
 
-func NewGateway() *Gateway {
+func NewGateway(opts Opts) *Gateway {
 	gw := &Gateway{
-		apex:       defaultApex,
-		resources:  k8sctrl.OrderedResources,
-		ttlLow:     ttlLowDefault,
-		ttlHigh:    ttlHighDefault,
-		hostmaster: defaultHostmaster,
+		opts: opts,
 	}
 	gw.externalAddrFunc = gw.selfAddress
 	return gw
-}
-
-func lookupResource(resource string) *k8sctrl.ResourceWithIndex {
-	for _, r := range k8sctrl.OrderedResources {
-		if r.Name == resource {
-			return r
-		}
-	}
-	return nil
-}
-
-func (gw *Gateway) UpdateResources(newResources []string) {
-	gw.resources = []*k8sctrl.ResourceWithIndex{}
-	for _, name := range newResources {
-		if resource := lookupResource(name); resource != nil {
-			gw.resources = append(gw.resources, resource)
-		}
-	}
 }
 
 // ServeDNS implements the plugin.Handle interface.
@@ -95,11 +59,11 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 	log.Infof("Incoming query %s", state.QName())
 
 	qname := state.QName()
-	zone := plugin.Zones(gw.Zones).Matches(qname)
+	zone := plugin.Zones(gw.opts.zones).Matches(qname)
 	clientIP = netutils.ExtractEdnsSubnet(r)
 
 	if zone == "" {
-		log.Infof("Request %s has not matched any zones %v", qname, gw.Zones)
+		log.Infof("Request %s has not matched any zones %v", qname, gw.opts.zones)
 		return dns.RcodeSuccess, nil // plugin.NextOrFailure(gw.Name(), gw.Next, ctx, w, r)
 	}
 	zone = qname[len(qname)-len(zone):] // maintain case of original query
@@ -110,12 +74,12 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 
 	log.Infof("Computed Index Keys %v", indexKey)
 
-	for _, z := range gw.Zones {
+	for _, z := range gw.opts.zones {
 		if state.Name() == z { // apex query
 			ret, err := gw.serveApex(state)
 			return ret, err
 		}
-		if dns.IsSubDomain(gw.apex+"."+z, state.Name()) {
+		if dns.IsSubDomain(gw.opts.apex+"."+z, state.Name()) {
 			// dns subdomain test for ns. and dns. queries
 			ret, err := gw.serveSubApex(state)
 			return ret, err
@@ -125,7 +89,7 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 	var ep k8sctrl.LocalDNSEndpoint
 	// Iterate over supported resources and lookup DNS queries
 	// Stop once we've found at least one match
-	for _, resource := range gw.resources {
+	for _, resource := range gw.opts.resources {
 		ep = resource.Lookup(indexKey, clientIP)
 		if len(ep.Targets) > 0 {
 			break
@@ -172,7 +136,7 @@ func (gw *Gateway) Name() string { return thisPlugin }
 func (gw *Gateway) A(state request.Request, results []net.IP, ttl endpoint.TTL) (records []dns.RR) {
 	dup := make(map[string]struct{})
 	if !ttl.IsConfigured() {
-		ttl = endpoint.TTL(gw.ttlLow)
+		ttl = endpoint.TTL(gw.opts.ttlLow)
 	}
 	for _, result := range results {
 		if _, ok := dup[result.String()]; !ok {
@@ -186,7 +150,7 @@ func (gw *Gateway) A(state request.Request, results []net.IP, ttl endpoint.TTL) 
 // TXT generates dns.RR for TXT record
 func (gw *Gateway) TXT(state request.Request, results []string, ttl endpoint.TTL) (records []dns.RR) {
 	if !ttl.IsConfigured() {
-		ttl = endpoint.TTL(gw.ttlLow)
+		ttl = endpoint.TTL(gw.opts.ttlLow)
 	}
 	return append(records, &dns.TXT{Hdr: dns.RR_Header{Name: state.Name(), Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: uint32(ttl)}, Txt: results})
 }
@@ -204,7 +168,7 @@ func (gw *Gateway) selfAddress(state request.Request) (records []dns.RR) {
 	}
 
 	var ep k8sctrl.LocalDNSEndpoint
-	for _, resource := range gw.resources {
+	for _, resource := range gw.opts.resources {
 		ep = resource.Lookup(index, net.ParseIP(state.IP()))
 		if len(ep.Targets) > 0 {
 			break
@@ -214,16 +178,4 @@ func (gw *Gateway) selfAddress(state request.Request) (records []dns.RR) {
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
 	return gw.A(state, netutils.TargetToIP(ep.Targets), ep.TTL)
-}
-
-func (gw *Gateway) SetTTLLow(ttl uint32) {
-	gw.ttlLow = ttl
-}
-
-func (gw *Gateway) SetTTLHigh(ttl uint32) {
-	gw.ttlHigh = ttl
-}
-
-func (gw *Gateway) SetApex(apex string) {
-	gw.apex = apex
 }
