@@ -21,13 +21,13 @@ type KubeController struct {
 	controllers []cache.SharedIndexInformer
 	labelFilter string
 	hasSynced   bool
-	resources   []*ResourceWithIndex
+	resources   []*ResourceWithLookup
 	epc         cache.SharedIndexInformer
 }
 
 type LookupEndpoint func(indexKey string, clientIP net.IP) (result LocalDNSEndpoint)
 
-type ResourceWithIndex struct {
+type ResourceWithLookup struct {
 	Name   string
 	Lookup LookupEndpoint
 }
@@ -41,9 +41,9 @@ const (
 var log = clog.NewWithPlugin("k8s controller")
 
 var Resources = struct {
-	DNSEndpoint *ResourceWithIndex
+	DNSEndpoint *ResourceWithLookup
 }{
-	DNSEndpoint: &ResourceWithIndex{
+	DNSEndpoint: &ResourceWithLookup{
 		Name: "DNSEndpoint",
 	},
 }

@@ -2,8 +2,8 @@ package wrr
 
 import "github.com/miekg/dns"
 
-// parseAnswerSection converts []dns.RR into map of A or AAAA records and slice containing all except A or AAAA
-func parseAnswerSection(arr []dns.RR) (ipmap map[string]dns.RR, ip []string, noip []dns.RR) {
+// ParseAnswerSection converts []dns.RR into map of A or AAAA records and slice containing all except A or AAAA
+func ParseAnswerSection(arr []dns.RR) (ipmap map[string]dns.RR, ip []string, noip []dns.RR) {
 	ipmap = make(map[string]dns.RR)
 	ip = make([]string, 0)
 	noip = make([]dns.RR, 0)
