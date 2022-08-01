@@ -35,7 +35,7 @@ func (c *containerResponseWriter) RemoteAddr() net.Addr {
 func (c *containerResponseWriter) WriteMsg(msg *dns.Msg) error {
 	c.msg = msg
 	err := c.w.WriteMsg(msg)
-	c.wasWritten = err != nil
+	c.wasWritten = err == nil
 	return err
 }
 

@@ -37,7 +37,6 @@ Optionally, you can specify what kind of resources to watch, default TTL to retu
 
 ```
 k8s_crd example.com {
-    resources DNSEndpoint
     ttl 10
     apex dns1
 }

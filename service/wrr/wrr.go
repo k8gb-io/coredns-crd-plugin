@@ -27,7 +27,7 @@ func (wrr *WeightRoundRobin) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	clientIP = netutils.ExtractEdnsSubnet(r)
 	indexKey := netutils.StripClosingDot(state.QName())
 
-	a, _, _ := parseAnswerSection(r.Answer)
+	_, a, _ := parseAnswerSection(r.Answer)
 
 	var ep = k8sctrl.Resources.DNSEndpoint.Lookup(indexKey, clientIP)
 
