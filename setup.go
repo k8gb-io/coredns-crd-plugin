@@ -55,12 +55,11 @@ func setup(c *caddy.Controller) error {
 		return plugin.Error(thisPlugin, err)
 	}
 
-	gwopts := gateway.NewGatewayOpts(rawArgs.annotation, rawArgs.apex, rawArgs.ttl, rawArgs.negttl, rawArgs.zones)
-
 	k8sCRD, err := NewK8sCRD(configType(rawArgs.kubecontroller), rawArgs.filter)
 	if err != nil {
 		return plugin.Error(thisPlugin, err)
 	}
+	gwopts := gateway.NewGatewayOpts(rawArgs.annotation, rawArgs.apex, rawArgs.ttl, rawArgs.negttl, rawArgs.zones)
 	_ = k8sCRD.container.Add(gateway.NewGateway(gwopts))
 	_ = k8sCRD.container.Add(wrr.NewWeightRoundRobin())
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {

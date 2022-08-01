@@ -12,6 +12,7 @@ require (
 	k8s.io/apimachinery v0.24.0
 	k8s.io/client-go v0.24.0
 	sigs.k8s.io/external-dns v0.12.0
+	github.com/k8gb-io/go-weight-shuffling v0.1.5
 )
 
 require (

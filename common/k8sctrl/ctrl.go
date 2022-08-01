@@ -21,7 +21,6 @@ type KubeController struct {
 	controllers []cache.SharedIndexInformer
 	labelFilter string
 	hasSynced   bool
-	resources   []*ResourceWithLookup
 	epc         cache.SharedIndexInformer
 }
 
@@ -55,8 +54,8 @@ func NewKubeController(ctx context.Context, c *dnsendpoint.ExtDNSClient, label s
 	}
 	endpointController := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
-			ListFunc:  endpointLister(ctx, ctrl.client, core.NamespaceAll, label),
-			WatchFunc: endpointWatcher(ctx, ctrl.client, core.NamespaceAll, label),
+			ListFunc:  endpointLister(ctx, ctrl.client, core.NamespaceAll, ctrl.labelFilter),
+			WatchFunc: endpointWatcher(ctx, ctrl.client, core.NamespaceAll, ctrl.labelFilter),
 		},
 		&endpoint.DNSEndpoint{},
 		defaultResyncPeriod,
