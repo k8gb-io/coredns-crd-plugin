@@ -23,6 +23,7 @@ import (
 	"os"
 
 	"github.com/AbsaOSS/k8s_crd/common/k8sctrl"
+
 	"github.com/AbsaOSS/k8s_crd/common/netutils"
 
 	"github.com/coredns/coredns/plugin"
@@ -86,17 +87,8 @@ func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 		}
 	}
 
-	var ep k8sctrl.LocalDNSEndpoint
-	// Iterate over supported resources and lookup DNS queries
-	// Stop once we've found at least one match
-	for _, resource := range gw.opts.resources {
-		ep = resource.Lookup(indexKey, clientIP)
-		if len(ep.Targets) > 0 {
-			break
-		}
-	}
+	var ep = k8sctrl.Resources.DNSEndpoint.Lookup(indexKey, clientIP)
 	log.Debugf("Computed response addresses %v", ep.Targets)
-
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
 
@@ -167,14 +159,7 @@ func (gw *Gateway) selfAddress(state request.Request) (records []dns.RR) {
 		index = defaultSvc
 	}
 
-	var ep k8sctrl.LocalDNSEndpoint
-	for _, resource := range gw.opts.resources {
-		ep = resource.Lookup(index, net.ParseIP(state.IP()))
-		if len(ep.Targets) > 0 {
-			break
-		}
-	}
-
+	var ep = k8sctrl.Resources.DNSEndpoint.Lookup(index, net.ParseIP(state.IP()))
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
 	return gw.A(state, netutils.TargetToIP(ep.Targets), ep.TTL)

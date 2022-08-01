@@ -40,8 +40,10 @@ const (
 // TODO: is new logger instance necessary
 var log = clog.NewWithPlugin("k8s controller")
 
-var OrderedResources = []*ResourceWithIndex{
-	{
+var Resources = struct {
+	DNSEndpoint *ResourceWithIndex
+}{
+	DNSEndpoint: &ResourceWithIndex{
 		Name: "DNSEndpoint",
 	},
 }
@@ -50,10 +52,6 @@ func NewKubeController(ctx context.Context, c *dnsendpoint.ExtDNSClient, label s
 	ctrl := &KubeController{
 		client:      c,
 		labelFilter: label,
-	}
-	dnsEndpoint := lookupResource("DNSEndpoint")
-	if dnsEndpoint == nil {
-		return ctrl
 	}
 	endpointController := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
@@ -65,18 +63,9 @@ func NewKubeController(ctx context.Context, c *dnsendpoint.ExtDNSClient, label s
 		cache.Indexers{endpointHostnameIndex: endpointHostnameIndexFunc},
 	)
 	ctrl.epc = endpointController
-	dnsEndpoint.Lookup = ctrl.getEndpointByName
+	Resources.DNSEndpoint.Lookup = ctrl.getEndpointByName
 	ctrl.controllers = append(ctrl.controllers, endpointController)
 	return ctrl
-}
-
-func (ctrl *KubeController) UpdateResources(newResources []string) {
-	ctrl.resources = []*ResourceWithIndex{}
-	for _, name := range newResources {
-		if resource := lookupResource(name); resource != nil {
-			ctrl.resources = append(ctrl.resources, resource)
-		}
-	}
 }
 
 func (ctrl *KubeController) Run() {
@@ -143,23 +132,4 @@ func (ctrl *KubeController) getEndpointByName(host string, clientIP net.IP) (lep
 		}
 	}
 	return lep
-}
-
-func BuildResources(strings []string) (resources []*ResourceWithIndex) {
-	resources = []*ResourceWithIndex{}
-	for _, name := range strings {
-		if resource := lookupResource(name); resource != nil {
-			resources = append(resources, resource)
-		}
-	}
-	return resources
-}
-
-func lookupResource(resource string) *ResourceWithIndex {
-	for _, r := range OrderedResources {
-		if r.Name == resource {
-			return r
-		}
-	}
-	return nil
 }

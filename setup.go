@@ -36,7 +36,6 @@ type args struct {
 	filter         string
 	kubecontroller string
 	negttl         uint32
-	resources      []string
 	ttl            uint32
 	zones          []string
 }
@@ -56,7 +55,7 @@ func setup(c *caddy.Controller) error {
 		return plugin.Error(thisPlugin, err)
 	}
 
-	gwopts := gateway.NewGatewayOpts(rawArgs.annotation, rawArgs.apex, rawArgs.ttl, rawArgs.negttl, rawArgs.resources, rawArgs.zones)
+	gwopts := gateway.NewGatewayOpts(rawArgs.annotation, rawArgs.apex, rawArgs.ttl, rawArgs.negttl, rawArgs.zones)
 
 	k8sCRD, err := NewK8sCRD(configType(rawArgs.kubecontroller), rawArgs.filter)
 	if err != nil {
@@ -95,8 +94,6 @@ func parse(c *caddy.Controller) (args, error) {
 				return a, c.ArgErr()
 			}
 			switch key {
-			case "resources":
-				a.resources = args
 			case "filter":
 				log.Infof("Filter: %+v", args)
 				a.filter = args[0]
