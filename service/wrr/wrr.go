@@ -8,6 +8,7 @@ import (
 	"github.com/AbsaOSS/k8s_crd/common/k8sctrl"
 	"github.com/AbsaOSS/k8s_crd/common/netutils"
 
+	clog "github.com/coredns/coredns/plugin/pkg/log"
 	"github.com/coredns/coredns/request"
 	"github.com/k8gb-io/go-weight-shuffling/gows"
 	"github.com/miekg/dns"
@@ -17,6 +18,8 @@ type WeightRoundRobin struct {
 }
 
 const thisPlugin = "wrr"
+
+var log = clog.NewWithPlugin(thisPlugin)
 
 func NewWeightRoundRobin() *WeightRoundRobin {
 	return &WeightRoundRobin{}
@@ -45,13 +48,36 @@ func (wrr *WeightRoundRobin) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 
 	g.shuffle(vector)
 
-	return dns.RcodeSuccess, nil
+	m := new(dns.Msg)
+	m.SetReply(state.Req)
+	m.Answer = wrr.updateAnswers(g, r.Answer)
+	if err := w.WriteMsg(m); err != nil {
+		log.Errorf("Failed to send a response: %s", err)
+	}
+	err = w.WriteMsg(m)
+
+	fmt.Println(vector)
+	//_, x,_ := netutils.ParseAnswerSection(m.Answer)
+	//fmt.Println(" IN:",x)
+
+	return dns.RcodeSuccess, err
 }
 
 func (wrr *WeightRoundRobin) Name() string { return thisPlugin }
 
-// strategy:roundRobin
-// weight-eu-0-50:172.18.0.5
-// weight-eu-1-50:172.18.0.6
-// weight-us-0-50:172.18.0.8
-// weight-us-1-50:172.18.0.9
+// updateAnswers set order of answers based on groups. The function doesn't handle
+// the fact that answers does not match the weight-labels in the endpoint because
+// other services can add or remove answers.
+func (wrr *WeightRoundRobin) updateAnswers(g groups, answers []dns.RR) (newAnswers []dns.RR) {
+	order := g.asSlice()
+	targets, _, noa := netutils.ParseAnswerSection(answers)
+	newAnswers = append(newAnswers, noa...)
+	for _, ip := range order {
+		if rr, found := targets[ip]; found {
+			newAnswers = append(newAnswers, rr)
+			continue
+		}
+		log.Infof("[%s] exist as target but missing in labels", ip)
+	}
+	return newAnswers
+}

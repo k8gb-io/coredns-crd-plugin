@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-
 	"github.com/coredns/coredns/plugin"
 	"github.com/miekg/dns"
 )
@@ -41,5 +40,5 @@ func (c *Container) Execute(ctx context.Context, w dns.ResponseWriter, msg *dns.
 			return fmt.Errorf("[service: %s]", svc.Name())
 		}
 	}
-	return nil
+	return err
 }

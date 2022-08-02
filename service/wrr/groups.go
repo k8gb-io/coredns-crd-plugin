@@ -34,3 +34,12 @@ func (g groups) shuffle(vec []int) {
 		g[v], g[i] = g[i], g[v]
 	}
 }
+
+// asSlice converts groups to array of IP address
+// Function respects order of groups
+func (g groups) asSlice() (arr []string) {
+	for _, v := range g {
+		arr = append(arr, v.IPs...)
+	}
+	return arr
+}
