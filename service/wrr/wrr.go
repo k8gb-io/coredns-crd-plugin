@@ -46,7 +46,6 @@ func (wrr *WeightRoundRobin) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 
 	vector := ws.PickVector()
 	g.shuffle(vector)
-	fmt.Println("G:", g, " vector:", vector)
 
 	m := new(dns.Msg)
 	m.SetReply(state.Req)

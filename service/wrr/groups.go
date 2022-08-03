@@ -1,5 +1,7 @@
 package wrr
 
+import "sort"
+
 type groups []*group
 
 // parseGroups create slice of groups in order as they are defined in Endpoint
@@ -19,6 +21,11 @@ func parseGroups(labels map[string]string) (g groups, err error) {
 		}
 		filter[pg.String()].IPs = append(filter[pg.String()].IPs, v)
 	}
+	// labels argument is map, so the groups has random order compared to immutable
+	sort.Slice(g, func(i, j int) bool {
+		return g[i].String() < g[j].String()
+	})
+
 	return g, err
 }
 
@@ -29,12 +36,12 @@ func (g groups) pdf() (pdf []int) {
 	return pdf
 }
 
-func (g groups) shuffle(vec []int) {
+func (g *groups) shuffle(vec []int) {
 	var gg []*group
 	for _, v := range vec {
-		gg = append(gg, g[v])
+		gg = append(gg, (*g)[v])
 	}
-	g = gg
+	*g = gg
 }
 
 // asSlice converts groups to array of IP address
