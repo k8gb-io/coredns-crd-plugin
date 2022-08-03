@@ -7,7 +7,7 @@ import (
 )
 
 // containerResponseWriter writer allows access to Message object (written by w.WriteMsg()) which is hidden by dns.ResponseWriter.
-// The containerResponseWriter wraps any ResponseWriter and add getMsg function which provides Written message, so the
+// The containerResponseWriter wraps any ResponseWriter and add retrieveMsg function which provides Written message, so the
 // dns.Msg is accessible within the container pipeline.
 type containerResponseWriter struct {
 	w   dns.ResponseWriter
@@ -69,6 +69,10 @@ func (c *containerResponseWriter) Hijack() {
 	c.w.Hijack()
 }
 
-func (c *containerResponseWriter) getMsg() *dns.Msg {
+// retrieveMsg retrieves written message. If was not written, returns argument.
+func (c *containerResponseWriter) retrieveMsg(msg *dns.Msg) *dns.Msg {
+	if c.msg == nil {
+		c.msg = msg
+	}
 	return c.msg
 }

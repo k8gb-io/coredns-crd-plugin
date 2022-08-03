@@ -30,12 +30,14 @@ func (wrr *WeightRoundRobin) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	state := request.Request{W: w, Req: r}
 	clientIP = netutils.ExtractEdnsSubnet(r)
 	indexKey := netutils.StripClosingDot(state.QName())
-
 	var ep = k8sctrl.Resources.DNSEndpoint.Lookup(indexKey, clientIP)
 	g, err := parseGroups(ep.Labels)
 	if err != nil {
 		err = fmt.Errorf("error parsing lables (%s)", err)
 		return dns.RcodeServerFailure, err
+	}
+	if !g.hasWeights() {
+		return dns.RcodeSuccess, nil
 	}
 
 	ws, err := gows.NewWS(g.pdf())

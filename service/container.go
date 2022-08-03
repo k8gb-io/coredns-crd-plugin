@@ -31,13 +31,13 @@ func (c *Container) Execute(ctx context.Context, w dns.ResponseWriter, msg *dns.
 	wr := newContainerWriter(w)
 	for _, svc := range c.services {
 		rcode, err = svc.ServeDNS(ctx, wr, msg)
-		msg = wr.getMsg()
 		if err != nil {
 			return fmt.Errorf("%s: %w", svc.Name(), err)
 		}
 		if rcode != dns.RcodeSuccess {
 			return fmt.Errorf("[service: %s]", svc.Name())
 		}
+		msg = wr.retrieveMsg(msg)
 	}
 	return wr.WriteContainerResult()
 }

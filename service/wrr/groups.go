@@ -52,3 +52,7 @@ func (g groups) asSlice() (arr []string) {
 	}
 	return arr
 }
+
+func (g groups) hasWeights() bool {
+	return len(g) != 0
+}
