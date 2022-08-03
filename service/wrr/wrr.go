@@ -45,8 +45,8 @@ func (wrr *WeightRoundRobin) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	}
 
 	vector := ws.PickVector()
-
 	g.shuffle(vector)
+	fmt.Println("G:", g, " vector:", vector)
 
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
@@ -54,12 +54,6 @@ func (wrr *WeightRoundRobin) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	if err := w.WriteMsg(m); err != nil {
 		log.Errorf("Failed to send a response: %s", err)
 	}
-	err = w.WriteMsg(m)
-
-	fmt.Println(vector)
-	//_, x,_ := netutils.ParseAnswerSection(m.Answer)
-	//fmt.Println(" IN:",x)
-
 	return dns.RcodeSuccess, err
 }
 

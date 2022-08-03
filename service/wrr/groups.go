@@ -30,9 +30,11 @@ func (g groups) pdf() (pdf []int) {
 }
 
 func (g groups) shuffle(vec []int) {
-	for i, v := range vec {
-		g[v], g[i] = g[i], g[v]
+	var gg []*group
+	for _, v := range vec {
+		gg = append(gg, g[v])
 	}
+	g = gg
 }
 
 // asSlice converts groups to array of IP address

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+
 	"github.com/coredns/coredns/plugin"
 	"github.com/miekg/dns"
 )
@@ -30,9 +31,7 @@ func (c *Container) Execute(ctx context.Context, w dns.ResponseWriter, msg *dns.
 	wr := newContainerWriter(w)
 	for _, svc := range c.services {
 		rcode, err = svc.ServeDNS(ctx, wr, msg)
-		if wr.MessageWasWritten() {
-			msg = wr.getMsg()
-		}
+		msg = wr.getMsg()
 		if err != nil {
 			return fmt.Errorf("%s: %w", svc.Name(), err)
 		}
@@ -40,5 +39,5 @@ func (c *Container) Execute(ctx context.Context, w dns.ResponseWriter, msg *dns.
 			return fmt.Errorf("[service: %s]", svc.Name())
 		}
 	}
-	return err
+	return wr.WriteContainerResult()
 }

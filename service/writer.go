@@ -10,9 +10,8 @@ import (
 // The containerResponseWriter wraps any ResponseWriter and add getMsg function which provides Written message, so the
 // dns.Msg is accessible within the container pipeline.
 type containerResponseWriter struct {
-	w          dns.ResponseWriter
-	msg        *dns.Msg
-	wasWritten bool
+	w   dns.ResponseWriter
+	msg *dns.Msg
 }
 
 func newContainerWriter(w dns.ResponseWriter) *containerResponseWriter {
@@ -31,12 +30,17 @@ func (c *containerResponseWriter) RemoteAddr() net.Addr {
 	return c.w.RemoteAddr()
 }
 
-// WriteMsg writes a reply back to the client.
+// WriteMsg saves a message that you can pick using getMessage().
+// Function override original functionality and doesn't write anything to the response!
+// Use this function as you use it with ResponseWriter. The container takes care about logic.
 func (c *containerResponseWriter) WriteMsg(msg *dns.Msg) error {
 	c.msg = msg
-	err := c.w.WriteMsg(msg)
-	c.wasWritten = err == nil
-	return err
+	return nil
+}
+
+// WriteContainerResult is equal to ResponseWriter.WriteMsg()
+func (c *containerResponseWriter) WriteContainerResult() error {
+	return c.w.WriteMsg(c.msg)
 }
 
 // Write writes a raw buffer back to the client.
@@ -67,9 +71,4 @@ func (c *containerResponseWriter) Hijack() {
 
 func (c *containerResponseWriter) getMsg() *dns.Msg {
 	return c.msg
-}
-
-// MessageWasWritten decides whether message was successfully written by ResponseWriter
-func (c *containerResponseWriter) MessageWasWritten() bool {
-	return c.wasWritten
 }
