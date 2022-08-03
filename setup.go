@@ -35,12 +35,14 @@ type args struct {
 	apex           string
 	filter         string
 	kubecontroller string
+	loadbalance    string
 	negttl         uint32
 	ttl            uint32
 	zones          []string
 }
 
 const thisPlugin = "k8s_crd"
+const weightRoundRobin = "weight"
 
 var log = clog.NewWithPlugin(thisPlugin)
 
@@ -60,8 +62,10 @@ func setup(c *caddy.Controller) error {
 		return plugin.Error(thisPlugin, err)
 	}
 	gwopts := gateway.NewGatewayOpts(rawArgs.annotation, rawArgs.apex, rawArgs.ttl, rawArgs.negttl, rawArgs.zones)
-	_ = k8sCRD.container.Add(gateway.NewGateway(gwopts))
-	_ = k8sCRD.container.Add(wrr.NewWeightRoundRobin())
+	_ = k8sCRD.container.Register(gateway.NewGateway(gwopts))
+	if rawArgs.loadbalance == weightRoundRobin {
+		_ = k8sCRD.container.Register(wrr.NewWeightRoundRobin())
+	}
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 		k8sCRD.Next = next
 		return k8sCRD
@@ -115,6 +119,9 @@ func parse(c *caddy.Controller) (args, error) {
 			case "kubecontroller":
 				log.Infof("kubecontroller: %+v", args)
 				a.kubecontroller = args[0]
+			case "loadbalance":
+				log.Infof("loadbalance: %+v", args)
+				a.loadbalance = args[0]
 			default:
 				return a, c.Errf("Unknown property '%s'", c.Val())
 			}

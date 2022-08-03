@@ -10,7 +10,7 @@ import (
 // PluginContainer is keeps particular services in the container and executes them
 // in order they were added
 type PluginContainer interface {
-	Add(plugin.Handler) error
+	Register(plugin.Handler) error
 	// Execute run plugin.Handler.ServeDNS in order as it was added.
 	// If error occurs, it exits immediately end return error.
 	// If !dns.RcodeSuccess is returned, it exits immediately end return error.

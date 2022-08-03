@@ -18,7 +18,7 @@ func NewCommonContainer() *Container {
 	}
 }
 
-func (c *Container) Add(handler plugin.Handler) error {
+func (c *Container) Register(handler plugin.Handler) error {
 	if handler == nil {
 		return fmt.Errorf("nil plugin")
 	}
