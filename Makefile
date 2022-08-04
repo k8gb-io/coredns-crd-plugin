@@ -86,3 +86,7 @@ terratest: deploy-app
 
 .PHONY: redeploy
 redeploy: lint build deploy-app
+
+.PHONY: test
+test:
+	go test ./... --cover
