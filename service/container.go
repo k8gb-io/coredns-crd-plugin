@@ -46,7 +46,7 @@ func (c *Container) Register(handler plugin.Handler) error {
 
 func (c *Container) Execute(ctx context.Context, w dns.ResponseWriter, msg *dns.Msg) (err error) {
 	var rcode int
-	wr := newContainerWriter(w)
+	wr := newContainerWriter(w, msg)
 	for _, svc := range c.services {
 		rcode, err = svc.ServeDNS(ctx, wr, msg)
 		if err != nil {
@@ -55,7 +55,7 @@ func (c *Container) Execute(ctx context.Context, w dns.ResponseWriter, msg *dns.
 		if rcode != dns.RcodeSuccess {
 			return fmt.Errorf("[service: %s]", svc.Name())
 		}
-		msg = wr.retrieveMsg(msg)
+		msg = wr.message()
 	}
 	return wr.WriteContainerResult()
 }

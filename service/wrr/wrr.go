@@ -64,7 +64,7 @@ func (wrr *WeightRoundRobin) ServeDNS(_ context.Context, w dns.ResponseWriter, r
 	}
 	// protection from incomplete answers (incomplete responses are generated during initialization,
 	// or when DNSEndpoint is not properly adjusted)
-	if len(g) != len(r.Answer) {
+	if len(g.asSlice()) != len(r.Answer) {
 		_, ansIP, _ := netutils.ParseAnswerSection(r.Answer)
 		log.Debugf("DNSEndpoint labels does not match with DNS answer. DNSEndpoint might not be initialised yet. ep: %v; answers: %v", g.asSlice(), ansIP)
 		return dns.RcodeSuccess, nil
@@ -77,7 +77,7 @@ func (wrr *WeightRoundRobin) ServeDNS(_ context.Context, w dns.ResponseWriter, r
 
 	vector := ws.PickVector()
 	g.shuffle(vector)
-	log.Infof("%v %v", vector, g)
+	log.Infof("%v%v: %v", vector, g, g.asSlice())
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
 	m.Answer = wrr.updateAnswers(g, r.Answer)
@@ -94,9 +94,8 @@ func (wrr *WeightRoundRobin) Name() string { return thisPlugin }
 // other services can add or remove answers. In such case function produces warning.
 func (wrr *WeightRoundRobin) updateAnswers(g groups, answers []dns.RR) (newAnswers []dns.RR) {
 	labelIPs := g.asSlice()
-	targets, msgip, noa := netutils.ParseAnswerSection(answers)
+	targets, _, noa := netutils.ParseAnswerSection(answers)
 	newAnswers = append(newAnswers, noa...)
-	log.Infof("msg: %v", msgip)
 	for _, ip := range labelIPs {
 		if rr, found := targets[ip]; found {
 			newAnswers = append(newAnswers, rr)
