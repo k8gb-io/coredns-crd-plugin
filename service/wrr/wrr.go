@@ -44,6 +44,11 @@ func NewWeightRoundRobin() *WeightRoundRobin {
 }
 
 func (wrr *WeightRoundRobin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	// skipping if no answers
+	if len(r.Answer) == 0 {
+		log.Debugf("no answers in response; skipping")
+		return dns.RcodeSuccess, nil
+	}
 	var clientIP net.IP
 	state := request.Request{W: w, Req: r}
 	clientIP = netutils.ExtractEdnsSubnet(r)
@@ -57,6 +62,11 @@ func (wrr *WeightRoundRobin) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	if !g.hasWeights() {
 		return dns.RcodeSuccess, nil
 	}
+	if len(g) != len(r.Answer) {
+		_, ansIP, _ := netutils.ParseAnswerSection(r.Answer)
+		log.Debugf("DNSEndpoint labels does not match with DNS answer. DNSEndpoint might not be initialised yet. ep: %v; answers: %v", g.asSlice(), ansIP)
+		return dns.RcodeSuccess, nil
+	}
 
 	ws, err := gows.NewWS(g.pdf())
 	if err != nil {
@@ -66,7 +76,7 @@ func (wrr *WeightRoundRobin) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 
 	vector := ws.PickVector()
 	g.shuffle(vector)
-	log.Debugf("%v %v", vector, g)
+	log.Infof("%v %v", vector, g)
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
 	m.Answer = wrr.updateAnswers(g, r.Answer)
@@ -80,17 +90,18 @@ func (wrr *WeightRoundRobin) Name() string { return thisPlugin }
 
 // updateAnswers set order of answers based on groups. The function doesn't handle
 // the fact that answers does not match the weight-labels in the endpoint because
-// other services can add or remove answers.
+// other services can add or remove answers. In such case function produces warning.
 func (wrr *WeightRoundRobin) updateAnswers(g groups, answers []dns.RR) (newAnswers []dns.RR) {
-	order := g.asSlice()
-	targets, _, noa := netutils.ParseAnswerSection(answers)
+	labelIPs := g.asSlice()
+	targets, msgip, noa := netutils.ParseAnswerSection(answers)
 	newAnswers = append(newAnswers, noa...)
-	for _, ip := range order {
+	log.Infof("msg: %v", msgip)
+	for _, ip := range labelIPs {
 		if rr, found := targets[ip]; found {
 			newAnswers = append(newAnswers, rr)
 			continue
 		}
-		log.Infof("[%s] exist as target but missing in labels", ip)
+		log.Warningf("[%s] exist as label but missing in incoming message", ip)
 	}
 	return newAnswers
 }

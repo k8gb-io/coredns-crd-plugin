@@ -61,6 +61,7 @@ func (p *K8sCRD) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg)
 
 	err := p.container.Execute(ctx, w, r)
 	if err != nil {
+		log.Errorf("%s", err)
 		return dns.RcodeServerFailure, err
 	}
 	return dns.RcodeSuccess, nil
