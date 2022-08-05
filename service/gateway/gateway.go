@@ -55,7 +55,7 @@ func NewGateway(opts Opts) *Gateway {
 }
 
 // ServeDNS implements the plugin.Handle interface.
-func (gw *Gateway) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+func (gw *Gateway) ServeDNS(_ context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	var clientIP net.IP
 	state := request.Request{W: w, Req: r}
 	log.Infof("Incoming query %s", state.QName())

@@ -43,7 +43,7 @@ func NewWeightRoundRobin() *WeightRoundRobin {
 	return &WeightRoundRobin{}
 }
 
-func (wrr *WeightRoundRobin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+func (wrr *WeightRoundRobin) ServeDNS(_ context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	// skipping if no answers
 	if len(r.Answer) == 0 {
 		log.Debugf("no answers in response; skipping")
@@ -62,12 +62,13 @@ func (wrr *WeightRoundRobin) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	if !g.hasWeights() {
 		return dns.RcodeSuccess, nil
 	}
+	// protection from incomplete answers (incomplete responses are generated during initialization,
+	// or when DNSEndpoint is not properly adjusted)
 	if len(g) != len(r.Answer) {
 		_, ansIP, _ := netutils.ParseAnswerSection(r.Answer)
 		log.Debugf("DNSEndpoint labels does not match with DNS answer. DNSEndpoint might not be initialised yet. ep: %v; answers: %v", g.asSlice(), ansIP)
 		return dns.RcodeSuccess, nil
 	}
-
 	ws, err := gows.NewWS(g.pdf())
 	if err != nil {
 		err = fmt.Errorf("error create distribution (%s)", err)
