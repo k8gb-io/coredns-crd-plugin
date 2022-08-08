@@ -41,18 +41,25 @@ func (d *Manager) Remove(plugin string) {
 	d.plugins = x
 }
 
-func (d *Manager) InsertBefore(plugin, insertBefore string) {
+func (d *Manager) InsertBefore(plugin, insertBefore string) error {
 	var x []string
+	var inserted bool
+	if len(d.plugins) == 0 {
+		d.plugins = append(d.plugins, plugin)
+		return nil
+	}
 	for _, v := range d.plugins {
-		if v == insertBefore {
+		if v == insertBefore && !inserted {
 			x = append(x, plugin)
+			inserted = true
 		}
 		x = append(x, v)
 	}
 	if len(d.plugins) != len(x)-1 {
-		panic(fmt.Sprintf("%v doesn't exist", insertBefore))
+		return fmt.Errorf("%v doesn't exist", insertBefore)
 	}
 	d.plugins = x
+	return nil
 }
 
 func (d *Manager) Get() []string {

@@ -29,7 +29,7 @@ import (
 
 func init() {
 	p := directives.NewDirectivesManager(dnsserver.Directives)
-	p.InsertBefore("k8s_crd", "kubernetes")
+	_ = p.InsertBefore("k8s_crd", "kubernetes")
 	p.Remove("kubernetes")
 	p.Remove("k8s_external")
 	dnsserver.Directives = p.Get()
