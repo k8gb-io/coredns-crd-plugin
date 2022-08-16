@@ -97,6 +97,8 @@ mocks:
 	mockgen -destination=common/k8sctrl/client_mock.go -package=k8sctrl k8s.io/client-go/rest Interface
 	mockgen -destination=common/k8sctrl/cache_mock.go -package=k8sctrl k8s.io/client-go/tools/cache SharedIndexInformer
 	mockgen -destination=common/k8sctrl/index_mock.go -package=k8sctrl k8s.io/client-go/tools/cache Indexer
+	mockgen -destination=service/handler_mock.go -package=service github.com/coredns/coredns/plugin Handler
+	mockgen -destination=service/rw_mock.go -package=service github.com/miekg/dns ResponseWriter
 
 .PHONY: check
 check:	lint test mocks license
