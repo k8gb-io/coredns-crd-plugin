@@ -14,6 +14,7 @@ require (
 	k8s.io/apimachinery v0.24.0
 	k8s.io/client-go v0.24.0
 	sigs.k8s.io/external-dns v0.12.0
+	github.com/golang/mock v1.6.0
 )
 
 require (

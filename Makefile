@@ -91,5 +91,12 @@ redeploy: lint build deploy-app
 test:
 	go test ./... --cover
 
+.PHONY: mocks
+mocks:
+	go install github.com/golang/mock/mockgen@v1.5.0
+	mockgen -destination=common/k8sctrl/client_mock.go -package=k8sctrl k8s.io/client-go/rest Interface
+	mockgen -destination=common/k8sctrl/cache_mock.go -package=k8sctrl k8s.io/client-go/tools/cache SharedIndexInformer
+	mockgen -destination=common/k8sctrl/index_mock.go -package=k8sctrl k8s.io/client-go/tools/cache Indexer
+
 .PHONY: check
-check:	lint test license
+check:	lint test mocks license
