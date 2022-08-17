@@ -37,7 +37,7 @@ type fakeWriter struct {
 	writer dns.ResponseWriter
 }
 
-func newFakeHandler(ctrl *gomock.Controller, f func(h *MockHandler)) fakePlugin {
+func newFakePlugin(ctrl *gomock.Controller, f func(h *MockHandler)) fakePlugin {
 	h := NewMockHandler(ctrl)
 	f(h)
 	return fakePlugin{
@@ -69,7 +69,7 @@ func TestContainer(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(1)
 			}),
 			plugin: []fakePlugin{
-				newFakeHandler(ctrl, func(h *MockHandler) {
+				newFakePlugin(ctrl, func(h *MockHandler) {
 					h.EXPECT().ServeDNS(gomock.Any(), gomock.Any(), gomock.Any()).Return(dns.RcodeSuccess, nil).Times(1)
 				})},
 		},
@@ -79,10 +79,10 @@ func TestContainer(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(1)
 			}),
 			plugin: []fakePlugin{
-				newFakeHandler(ctrl, func(h *MockHandler) {
+				newFakePlugin(ctrl, func(h *MockHandler) {
 					h.EXPECT().ServeDNS(gomock.Any(), gomock.Any(), gomock.Any()).Return(dns.RcodeSuccess, nil).Times(1)
 				}),
-				newFakeHandler(ctrl, func(h *MockHandler) {
+				newFakePlugin(ctrl, func(h *MockHandler) {
 					h.EXPECT().ServeDNS(gomock.Any(), gomock.Any(), gomock.Any()).Return(dns.RcodeSuccess, nil).Times(1)
 				})},
 		},
@@ -98,21 +98,21 @@ func TestContainer(t *testing.T) {
 			expectedError: true,
 			writer:        newFakeWriter(ctrl, func(w *MockResponseWriter) {}),
 			plugin: []fakePlugin{
-				newFakeHandler(ctrl, func(h *MockHandler) {
+				newFakePlugin(ctrl, func(h *MockHandler) {
 					h.EXPECT().Name().Return("fake").Times(1)
 					h.EXPECT().ServeDNS(gomock.Any(), gomock.Any(), gomock.Any()).Return(dns.RcodeSuccess, fmt.Errorf("fake")).Times(1)
 				}),
-				newFakeHandler(ctrl, func(h *MockHandler) {})},
+				newFakePlugin(ctrl, func(h *MockHandler) {})},
 		},
 		{
 			name:          "Second handler error",
 			expectedError: true,
 			writer:        newFakeWriter(ctrl, func(w *MockResponseWriter) {}),
 			plugin: []fakePlugin{
-				newFakeHandler(ctrl, func(h *MockHandler) {
+				newFakePlugin(ctrl, func(h *MockHandler) {
 					h.EXPECT().ServeDNS(gomock.Any(), gomock.Any(), gomock.Any()).Return(dns.RcodeSuccess, nil).Times(1)
 				}),
-				newFakeHandler(ctrl, func(h *MockHandler) {
+				newFakePlugin(ctrl, func(h *MockHandler) {
 					h.EXPECT().Name().Return("fake").Times(1)
 					h.EXPECT().ServeDNS(gomock.Any(), gomock.Any(), gomock.Any()).Return(dns.RcodeSuccess, fmt.Errorf("fake")).Times(1)
 				})},
@@ -122,11 +122,11 @@ func TestContainer(t *testing.T) {
 			expectedError: true,
 			writer:        newFakeWriter(ctrl, func(w *MockResponseWriter) {}),
 			plugin: []fakePlugin{
-				newFakeHandler(ctrl, func(h *MockHandler) {
+				newFakePlugin(ctrl, func(h *MockHandler) {
 					h.EXPECT().Name().Return("fake").Times(1)
 					h.EXPECT().ServeDNS(gomock.Any(), gomock.Any(), gomock.Any()).Return(dns.RcodeRefused, nil).Times(1)
 				}),
-				newFakeHandler(ctrl, func(h *MockHandler) {})},
+				newFakePlugin(ctrl, func(h *MockHandler) {})},
 		},
 	}
 
