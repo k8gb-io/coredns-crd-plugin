@@ -1,10 +1,11 @@
 module github.com/AbsaOSS/k8s_crd
 
-go 1.17
+go 1.18
 
 require (
 	github.com/coredns/caddy v1.1.1
 	github.com/coredns/coredns v1.9.2
+	github.com/golang/mock v1.6.0
 	github.com/k8gb-io/go-weight-shuffling v0.1.5
 	github.com/maxmind/mmdbwriter v0.0.0-20210819141656-efe6d8ec5816
 	github.com/miekg/dns v1.1.49
@@ -14,7 +15,6 @@ require (
 	k8s.io/apimachinery v0.24.0
 	k8s.io/client-go v0.24.0
 	sigs.k8s.io/external-dns v0.12.0
-	github.com/golang/mock v1.6.0
 )
 
 require (

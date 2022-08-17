@@ -43,7 +43,6 @@ GOLIC=$(shell which golic)
 endif
 
 # run all linters from .golangci.yaml; see: https://golangci-lint.run/usage/install/#local-installation
-.PHONY: lint
 lint:
 	golangci-lint run
 
@@ -75,23 +74,19 @@ deploy-app: image import-image
 		-f terratest/helm_values.yaml \
 		--set coredns.image.tag=${TAG}
 
-.PHONY: lincense
 # updates source code with license headers
 license: golic
 	$(GOLIC) inject -t apache2 -c "2022 The k8gb Contributors"
 
-.PHONY: terratest
 terratest: deploy-app
 	cd terratest/test/ && go test -v
 
-.PHONY: redeploy
 redeploy: lint build deploy-app
 
 .PHONY: test
 test:
 	go test ./... --cover
 
-.PHONY: mocks
 mocks:
 	go install github.com/golang/mock/mockgen@v1.5.0
 	mockgen -destination=common/k8sctrl/client_mock.go -package=k8sctrl k8s.io/client-go/rest Interface
@@ -100,5 +95,7 @@ mocks:
 	mockgen -destination=service/handler_mock.go -package=service github.com/coredns/coredns/plugin Handler
 	mockgen -destination=service/rw_mock.go -package=service github.com/miekg/dns ResponseWriter
 
-.PHONY: check
-check:	lint test mocks license
+goimports:
+	goimports -w ./
+
+check:	goimports lint build test mocks license
