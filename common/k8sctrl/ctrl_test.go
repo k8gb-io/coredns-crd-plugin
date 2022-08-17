@@ -24,6 +24,8 @@ import (
 	"testing"
 	"unsafe"
 
+	"github.com/AbsaOSS/k8s_crd/common/mocks"
+
 	"sigs.k8s.io/external-dns/endpoint"
 
 	dnsendpoint "github.com/AbsaOSS/k8s_crd/extdns"
@@ -51,9 +53,9 @@ func TestKubeController(t *testing.T) {
 	}
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mctrl := NewMockInterface(ctrl)
-	mcache := NewMockSharedIndexInformer(ctrl)
-	midx := NewMockIndexer(ctrl)
+	mctrl := mocks.NewMockInterface(ctrl)
+	mcache := mocks.NewMockSharedIndexInformer(ctrl)
+	midx := mocks.NewMockIndexer(ctrl)
 	midx.EXPECT().ByIndex(endpointHostnameIndex, host).Return([]interface{}{defaultEP}, nil).Times(1)
 	mcache.EXPECT().GetIndexer().Return(midx)
 

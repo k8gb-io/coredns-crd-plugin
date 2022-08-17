@@ -85,15 +85,15 @@ redeploy: lint build deploy-app
 
 .PHONY: test
 test:
-	go test ./... --cover
+	go test $$(go list ./... | grep -v /mocks | grep -v /terratest | grep -v /netutils) --cover
 
 mocks:
 	go install github.com/golang/mock/mockgen@v1.5.0
-	mockgen -destination=common/k8sctrl/client_mock.go -package=k8sctrl k8s.io/client-go/rest Interface
-	mockgen -destination=common/k8sctrl/cache_mock.go -package=k8sctrl k8s.io/client-go/tools/cache SharedIndexInformer
-	mockgen -destination=common/k8sctrl/index_mock.go -package=k8sctrl k8s.io/client-go/tools/cache Indexer
-	mockgen -destination=service/handler_mock.go -package=service github.com/coredns/coredns/plugin Handler
-	mockgen -destination=service/rw_mock.go -package=service github.com/miekg/dns ResponseWriter
+	mockgen -destination=common/mocks/client_mock.go -package=mocks k8s.io/client-go/rest Interface
+	mockgen -destination=common/mocks/cache_mock.go -package=mocks k8s.io/client-go/tools/cache SharedIndexInformer
+	mockgen -destination=common/mocks/index_mock.go -package=mocks k8s.io/client-go/tools/cache Indexer
+	mockgen -destination=common/mocks/handler_mock.go -package=mocks github.com/coredns/coredns/plugin Handler
+	mockgen -destination=common/mocks/rw_mock.go -package=mocks github.com/miekg/dns ResponseWriter
 
 goimports:
 	goimports -w ./
