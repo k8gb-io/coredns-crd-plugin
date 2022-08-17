@@ -64,7 +64,7 @@ func TestContainer(t *testing.T) {
 		plugin        []fakePlugin
 	}{
 		{
-			name: "OneHandlerSucceed",
+			name: "One handler succeed",
 			writer: newFakeWriter(ctrl, func(w *MockResponseWriter) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(1)
 			}),
@@ -74,7 +74,7 @@ func TestContainer(t *testing.T) {
 				})},
 		},
 		{
-			name: "TwoHandlersSucceed",
+			name: "Two handlers succeed",
 			writer: newFakeWriter(ctrl, func(w *MockResponseWriter) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(1)
 			}),
@@ -87,14 +87,14 @@ func TestContainer(t *testing.T) {
 				})},
 		},
 		{
-			name: "NoHandlers",
+			name: "No handlers",
 			writer: newFakeWriter(ctrl, func(w *MockResponseWriter) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(1)
 			}),
 			plugin: []fakePlugin{},
 		},
 		{
-			name:          "FirstHandlerError",
+			name:          "First handler error",
 			expectedError: true,
 			writer:        newFakeWriter(ctrl, func(w *MockResponseWriter) {}),
 			plugin: []fakePlugin{
@@ -105,7 +105,7 @@ func TestContainer(t *testing.T) {
 				newFakeHandler(ctrl, func(h *MockHandler) {})},
 		},
 		{
-			name:          "SecondHandlerError",
+			name:          "Second handler error",
 			expectedError: true,
 			writer:        newFakeWriter(ctrl, func(w *MockResponseWriter) {}),
 			plugin: []fakePlugin{
@@ -116,6 +116,17 @@ func TestContainer(t *testing.T) {
 					h.EXPECT().Name().Return("fake").Times(1)
 					h.EXPECT().ServeDNS(gomock.Any(), gomock.Any(), gomock.Any()).Return(dns.RcodeSuccess, fmt.Errorf("fake")).Times(1)
 				})},
+		},
+		{
+			name:          "First handler refused status",
+			expectedError: true,
+			writer:        newFakeWriter(ctrl, func(w *MockResponseWriter) {}),
+			plugin: []fakePlugin{
+				newFakeHandler(ctrl, func(h *MockHandler) {
+					h.EXPECT().Name().Return("fake").Times(1)
+					h.EXPECT().ServeDNS(gomock.Any(), gomock.Any(), gomock.Any()).Return(dns.RcodeRefused, nil).Times(1)
+				}),
+				newFakeHandler(ctrl, func(h *MockHandler) {})},
 		},
 	}
 
@@ -130,4 +141,59 @@ func TestContainer(t *testing.T) {
 			assert.Equal(t, test.expectedError, err != nil)
 		})
 	}
+}
+
+func TestContainerWriter(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	m1 := &dns.Msg{}
+	m2 := &dns.Msg{}
+	tests := []struct {
+		name            string
+		w               fakeWriter
+		initialMesage   *dns.Msg
+		writtenMessage  *dns.Msg
+		expectedMessage *dns.Msg
+		expectedError   bool
+	}{
+		{
+			name:            "Written writtenMessage has not been changed",
+			w:               newFakeWriter(ctrl, func(w *MockResponseWriter) {}),
+			writtenMessage:  m1,
+			initialMesage:   m1,
+			expectedMessage: m1,
+			expectedError:   false,
+		},
+		{
+			name:            "Written writtenMessage has been changed",
+			w:               newFakeWriter(ctrl, func(w *MockResponseWriter) {}),
+			writtenMessage:  m1,
+			initialMesage:   m2,
+			expectedMessage: m2,
+			expectedError:   false,
+		},
+		{
+			name:            "Written writtenMessage is nil",
+			w:               newFakeWriter(ctrl, func(w *MockResponseWriter) {}),
+			initialMesage:   m1,
+			writtenMessage:  nil,
+			expectedMessage: m1,
+			expectedError:   true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			w := newContainerWriter(test.w.writer, test.initialMesage)
+			err := w.WriteMsg(test.writtenMessage)
+			assert.Equal(t, test.expectedError, err != nil)
+			assert.Equal(t, test.expectedMessage, w.message())
+		})
+	}
+}
+
+func TestRegister(t *testing.T) {
+	c := NewCommonContainer()
+	err := c.Register(nil)
+	assert.Error(t, err)
 }

@@ -50,7 +50,7 @@ func (c *containerResponseWriter) RemoteAddr() net.Addr {
 	return c.w.RemoteAddr()
 }
 
-// WriteMsg saves a message that you can pick using getMessage().
+// WriteMsg saves a writtenMessage that you can pick using getMessage().
 // Function override original functionality and doesn't write anything to the response!
 // Use this function as you use it with ResponseWriter. The container takes care about logic.
 func (c *containerResponseWriter) WriteMsg(msg *dns.Msg) error {
