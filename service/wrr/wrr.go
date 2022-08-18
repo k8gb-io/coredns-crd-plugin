@@ -101,6 +101,7 @@ func (wrr *WeightRoundRobin) updateAnswers(g groups, answers []dns.RR) (newAnswe
 			newAnswers = append(newAnswers, rr)
 			continue
 		}
+		// some plugin before wrr removed any IP(s). It exists in labels but missing in answers
 		log.Warningf("[%s] exist as label but missing in incoming message", ip)
 	}
 	return newAnswers

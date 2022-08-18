@@ -185,6 +185,28 @@ func TestWeightRoundRobin(t *testing.T) {
 		},
 
 		{
+			name: "Serve two 50% endpoints",
+			msg: &dns.Msg{
+				Answer: []dns.RR{
+					test.A("alpha.cloud.example.com.		300	IN	A			10.240.0.1"),
+					test.A("alpha.cloud.example.com.		300	IN	A			10.240.1.1"),
+				},
+			},
+			writer: newFakeWriter(ctrl, func(w *mocks.MockResponseWriter) {
+				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(1)
+			}),
+			expectedError: false,
+			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+				return k8sctrl.LocalDNSEndpoint{
+					DNSName: host,
+					Labels:  map[string]string{"strategy": "roundrobin", "weight-us-0-50": "10.240.0.1", "weight-eu-0-50": "10.240.1.1"},
+					Targets: []string{"10.240.0.1"},
+				}
+			},
+			rcode: dns.RcodeSuccess,
+		},
+
+		{
 			name: "Serve RR endpoint with one 100% weight label but broken writer",
 			msg: &dns.Msg{
 				Answer: []dns.RR{
@@ -204,15 +226,36 @@ func TestWeightRoundRobin(t *testing.T) {
 			},
 			rcode: dns.RcodeSuccess,
 		},
+
+		{
+			name: "Serve RR endpoint where address doesn't meet weight label value",
+			msg: &dns.Msg{
+				Answer: []dns.RR{
+					test.A("alpha.cloud.example.com.		300	IN	A			10.10.10.1"),
+				},
+			},
+			writer: newFakeWriter(ctrl, func(w *mocks.MockResponseWriter) {
+				w.EXPECT().WriteMsg(gomock.Any()).Return(fmt.Errorf("broken writer")).Times(1)
+			}),
+			expectedError: true,
+			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+				return k8sctrl.LocalDNSEndpoint{
+					DNSName: host,
+					Labels:  map[string]string{"strategy": "roundrobin", "weight-eu-0-100": "10.240.0.1"},
+					Targets: []string{"10.240.0.1"},
+				}
+			},
+			rcode: dns.RcodeSuccess,
+		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, unit := range tests {
+		t.Run(unit.name, func(t *testing.T) {
 			wrr := NewWeightRoundRobin()
-			k8sctrl.Resources.DNSEndpoint.Lookup = test.lookup
-			code, err := wrr.ServeDNS(context.TODO(), test.writer.w, test.msg)
-			assert.Equal(t, test.rcode, code)
-			assert.Equal(t, test.expectedError, err != nil)
+			k8sctrl.Resources.DNSEndpoint.Lookup = unit.lookup
+			code, err := wrr.ServeDNS(context.TODO(), unit.writer.w, unit.msg)
+			assert.Equal(t, unit.rcode, code)
+			assert.Equal(t, unit.expectedError, err != nil)
 		})
 
 	}
