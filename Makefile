@@ -85,7 +85,7 @@ redeploy: lint build deploy-app
 
 .PHONY: test
 test:
-	go test $$(go list ./... | grep -v /mocks | grep -v /terratest | grep -v /netutils) --cover
+	go test $$(go list ./... | grep -Ev '/mocks|/terratest|/netutils|/cmd') --cover
 
 mocks:
 	go install github.com/golang/mock/mockgen@v1.5.0

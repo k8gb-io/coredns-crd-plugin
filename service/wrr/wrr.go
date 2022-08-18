@@ -81,7 +81,7 @@ func (wrr *WeightRoundRobin) ServeDNS(_ context.Context, w dns.ResponseWriter, r
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
 	m.Answer = wrr.updateAnswers(g, r.Answer)
-	if err := w.WriteMsg(m); err != nil {
+	if err = w.WriteMsg(m); err != nil {
 		log.Errorf("Failed to send a response: %s", err)
 	}
 	return dns.RcodeSuccess, err
