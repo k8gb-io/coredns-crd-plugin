@@ -228,10 +228,11 @@ func TestWeightRoundRobin(t *testing.T) {
 		},
 
 		{
-			name: "Serve RR endpoint where address doesn't meet weight label value",
+			name: "Serve RR endpoint where addresses doesn't meet weight label value",
 			msg: &dns.Msg{
 				Answer: []dns.RR{
 					test.A("alpha.cloud.example.com.		300	IN	A			10.10.10.1"),
+					test.A("alpha.cloud.example.com.		300	IN	A			10.10.10.2"),
 				},
 			},
 			writer: newFakeWriter(ctrl, func(w *mocks.MockResponseWriter) {
@@ -241,7 +242,37 @@ func TestWeightRoundRobin(t *testing.T) {
 			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
-					Labels:  map[string]string{"strategy": "roundrobin", "weight-eu-0-100": "10.240.0.1"},
+					Labels:  map[string]string{"strategy": "roundrobin", "weight-eu-0-50": "10.240.0.1", "weight-us-0-50": "10.240.1.1"},
+					Targets: []string{"10.240.0.1"},
+				}
+			},
+			rcode: dns.RcodeSuccess,
+		},
+
+		{
+			name: "Asymetric group test",
+			msg: &dns.Msg{
+				Answer: []dns.RR{
+					test.A("alpha.cloud.example.com.		300	IN	A			10.240.0.1"),
+					test.A("alpha.cloud.example.com.		300	IN	A			10.240.0.2"),
+					test.A("alpha.cloud.example.com.		300	IN	A			10.240.0.3"),
+					test.A("alpha.cloud.example.com.		300	IN	A			10.240.0.4"),
+					test.A("alpha.cloud.example.com.		300	IN	A			10.240.1.1"),
+				},
+			},
+			writer: newFakeWriter(ctrl, func(w *mocks.MockResponseWriter) {
+				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(1)
+			}),
+			expectedError: false,
+			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+				return k8sctrl.LocalDNSEndpoint{
+					DNSName: host,
+					Labels: map[string]string{"strategy": "roundrobin",
+						"weight-eu-0-50": "10.240.0.1",
+						"weight-eu-1-50": "10.240.0.2",
+						"weight-eu-2-50": "10.240.0.3",
+						"weight-eu-3-50": "10.240.0.4",
+						"weight-us-0-50": "10.240.1.1"},
 					Targets: []string{"10.240.0.1"},
 				}
 			},
