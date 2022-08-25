@@ -54,7 +54,6 @@ const (
 	endpointHostnameIndex = "endpointHostname"
 )
 
-// TODO: is new logger instance necessary
 var log = clog.NewWithPlugin("k8s controller")
 
 var Resources = struct {

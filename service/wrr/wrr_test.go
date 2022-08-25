@@ -24,6 +24,8 @@ import (
 	"net"
 	"testing"
 
+	"github.com/AbsaOSS/k8s_crd/common/netutils"
+
 	"github.com/AbsaOSS/k8s_crd/common/k8sctrl"
 
 	"github.com/AbsaOSS/k8s_crd/common/mocks"
@@ -33,8 +35,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TODO: combine A, AAA, MX CNAme records
-// TODO: endpoint values!
 type fakeWriter struct {
 	w dns.ResponseWriter
 }
@@ -52,6 +52,67 @@ func TestWeightRoundRobin(t *testing.T) {
 	defer ctrl.Finish()
 
 	const host = "roundrobin.cloud.example.com"
+
+	rs1 := newRecordSet([]dns.RR{
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::89"),
+		test.CNAME("beta.cloud.example.com.	300	IN	CNAME		beta.cloud.example.com."),
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::8a"),
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::8b"),
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::ff"),
+		test.MX("alpha.cloud.example.com.	300	IN	MX		1	mxa-alpha.cloud.example.com."),
+	}, []dns.RR{
+		test.CNAME("beta.cloud.example.com.	300	IN	CNAME		beta.cloud.example.com."),
+		test.MX("alpha.cloud.example.com.	300	IN	MX		1	mxa-alpha.cloud.example.com."),
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::89"),
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::8a"),
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::ff"),
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::8b"),
+	}, map[string]string{"strategy": "roundrobin",
+		"weight-eu-0-50": "4001:a1:1014::89",
+		"weight-eu-1-50": "4001:a1:1014::8a",
+		"weight-za-0-0":  "4001:a1:1014::8b",
+		"weight-us-0-50": "4001:a1:1014::ff"})
+
+	rs2 := newRecordSet([]dns.RR{
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::89"),
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::8b"),
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::ff"),
+	}, []dns.RR{
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::89"),
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::ff"),
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::8b"),
+	}, map[string]string{"strategy": "roundrobin",
+		"weight-eu-0-50": "4001:a1:1014::89",
+		"weight-za-0-0":  "4001:a1:1014::8b",
+		"weight-us-0-50": "4001:a1:1014::ff"})
+
+	rs3 := newRecordSet([]dns.RR{
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::89"),
+		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::8b"),
+	}, []dns.RR{}, map[string]string{"strategy": "roundrobin",
+		"weight-eu-0-50": "4001:a1:1014::89",
+		"weight-za-0-0":  "4001:a1:1014::8b",
+		"weight-us-0-50": "4001:a1:1014::ff"})
+
+	rs4 := newRecordSet([]dns.RR{
+		test.A("alpha.cloud.example.com.		300	IN	A		10.0.0.1"),
+		test.CNAME("beta.cloud.example.com.	300	IN	CNAME		beta.cloud.example.com."),
+		test.A("alpha.cloud.example.com.		300	IN	A		10.0.0.2"),
+		test.A("alpha.cloud.example.com.		300	IN	A		10.10.0.1"),
+		test.A("alpha.cloud.example.com.		300	IN	A		10.20.0.1"),
+		test.MX("alpha.cloud.example.com.	300	IN	MX		1	mxa-alpha.cloud.example.com."),
+	}, []dns.RR{
+		test.CNAME("beta.cloud.example.com.	300	IN	CNAME		beta.cloud.example.com."),
+		test.MX("alpha.cloud.example.com.	300	IN	MX		1	mxa-alpha.cloud.example.com."),
+		test.A("alpha.cloud.example.com.		300	IN	A		10.0.0.1"),
+		test.A("alpha.cloud.example.com.		300	IN	A		10.0.0.2"),
+		test.A("alpha.cloud.example.com.		300	IN	A		10.20.0.1"),
+		test.A("alpha.cloud.example.com.		300	IN	A		10.10.0.1"),
+	}, map[string]string{"strategy": "roundrobin",
+		"weight-eu-0-50": "10.0.0.1",
+		"weight-eu-1-50": "10.0.0.2",
+		"weight-za-0-0":  "10.10.0.1",
+		"weight-us-0-50": "10.20.0.1"})
 
 	tests := []struct {
 		name          string
@@ -278,6 +339,81 @@ func TestWeightRoundRobin(t *testing.T) {
 			},
 			rcode: dns.RcodeSuccess,
 		},
+
+		{
+			name: "Handle AAAA records mixed with CNAME and MX records",
+			msg: &dns.Msg{
+				Answer: rs1.answer,
+			},
+			writer: newFakeWriter(ctrl, func(w *mocks.MockResponseWriter) {
+				w.EXPECT().WriteMsg(gomock.Any()).DoAndReturn(rs1.checkExpected).Times(1)
+			}),
+			expectedError: false,
+			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+				return k8sctrl.LocalDNSEndpoint{
+					DNSName: host,
+					Labels:  rs1.labels,
+					Targets: []string{"4001:a1:1014::89", "4001:a1:1014::8a", "4001:a1:1014::ff"},
+				}
+			},
+			rcode: dns.RcodeSuccess,
+		},
+
+		{
+			name: "Handle A records mixed with CNAME and MX records",
+			msg: &dns.Msg{
+				Answer: rs4.answer,
+			},
+			writer: newFakeWriter(ctrl, func(w *mocks.MockResponseWriter) {
+				w.EXPECT().WriteMsg(gomock.Any()).DoAndReturn(rs4.checkExpected).Times(1)
+			}),
+			expectedError: false,
+			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+				return k8sctrl.LocalDNSEndpoint{
+					DNSName: host,
+					Labels:  rs4.labels,
+					Targets: []string{"4001:a1:1014::89", "4001:a1:1014::8a", "4001:a1:1014::ff"},
+				}
+			},
+			rcode: dns.RcodeSuccess,
+		},
+
+		{
+			name: "Handle AAAA records without CNAME and MX records",
+			msg: &dns.Msg{
+				Answer: rs2.answer,
+			},
+			writer: newFakeWriter(ctrl, func(w *mocks.MockResponseWriter) {
+				w.EXPECT().WriteMsg(gomock.Any()).DoAndReturn(rs2.checkExpected).Times(1)
+			}),
+			expectedError: false,
+			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+				return k8sctrl.LocalDNSEndpoint{
+					DNSName: host,
+					Labels:  rs2.labels,
+					Targets: []string{"4001:a1:1014::89", "4001:a1:1014::8a", "4001:a1:1014::ff"},
+				}
+			},
+			rcode: dns.RcodeSuccess,
+		},
+
+		{
+			name: "Handle AAAA records with incomplete Answer section",
+			msg: &dns.Msg{
+				Answer: rs3.answer,
+			},
+			writer: newFakeWriter(ctrl, func(w *mocks.MockResponseWriter) {
+			}),
+			expectedError: false,
+			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+				return k8sctrl.LocalDNSEndpoint{
+					DNSName: host,
+					Labels:  rs3.labels,
+					Targets: []string{"4001:a1:1014::89", "4001:a1:1014::8a", "4001:a1:1014::ff"},
+				}
+			},
+			rcode: dns.RcodeSuccess,
+		},
 	}
 
 	for _, unit := range tests {
@@ -290,4 +426,39 @@ func TestWeightRoundRobin(t *testing.T) {
 		})
 
 	}
+}
+
+type recordset struct {
+	answer   []dns.RR
+	expected []dns.RR
+	labels   map[string]string
+}
+
+func newRecordSet(answer, expected []dns.RR, labels map[string]string) *recordset {
+	rs := new(recordset)
+	rs.expected = expected
+	rs.answer = answer
+	rs.labels = labels
+	return rs
+}
+
+func (rs *recordset) checkExpected(msg *dns.Msg) error {
+	if len(msg.Answer) != len(rs.expected) {
+		return fmt.Errorf("expecting answers")
+	}
+	oip, o, onoip := netutils.ParseAnswerSection(msg.Answer)
+	eip, e, enoip := netutils.ParseAnswerSection(rs.expected)
+
+	if len(oip) != len(eip) {
+		return fmt.Errorf("%v %v", o, e)
+	}
+	if len(onoip) != len(enoip) {
+		return fmt.Errorf("%v %v", enoip, onoip)
+	}
+	for k := range oip {
+		if _, ok := eip[k]; !ok {
+			return fmt.Errorf("%s not found", k)
+		}
+	}
+	return nil
 }

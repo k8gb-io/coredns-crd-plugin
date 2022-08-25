@@ -6,7 +6,7 @@ require (
 	github.com/coredns/caddy v1.1.1
 	github.com/coredns/coredns v1.9.2
 	github.com/golang/mock v1.6.0
-	github.com/k8gb-io/go-weight-shuffling v0.1.5
+	github.com/k8gb-io/go-weight-shuffling v0.2.0
 	github.com/maxmind/mmdbwriter v0.0.0-20210819141656-efe6d8ec5816
 	github.com/miekg/dns v1.1.49
 	github.com/oschwald/maxminddb-golang v1.9.0

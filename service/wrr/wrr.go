@@ -64,8 +64,8 @@ func (wrr *WeightRoundRobin) ServeDNS(_ context.Context, w dns.ResponseWriter, r
 	}
 	// protection from incomplete answers (incomplete responses are generated during initialization,
 	// or when DNSEndpoint is not properly adjusted)
-	if len(g.asSlice()) != len(r.Answer) {
-		_, ansIP, _ := netutils.ParseAnswerSection(r.Answer)
+	_, ansIP, _ := netutils.ParseAnswerSection(r.Answer)
+	if len(g.asSlice()) != len(ansIP) {
 		log.Debugf("DNSEndpoint labels does not match with DNS answer. DNSEndpoint might not be initialised yet. ep: %v; answers: %v", g.asSlice(), ansIP)
 		return dns.RcodeSuccess, nil
 	}
@@ -75,7 +75,7 @@ func (wrr *WeightRoundRobin) ServeDNS(_ context.Context, w dns.ResponseWriter, r
 		return dns.RcodeServerFailure, err
 	}
 
-	vector := ws.PickVector()
+	vector := ws.PickVector(gows.KeepIndexesForZeroPDF)
 	g.shuffle(vector)
 	log.Infof("%v%v: %v", vector, g, g.asSlice())
 	m := new(dns.Msg)
