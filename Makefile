@@ -64,7 +64,7 @@ import-image:
 
 deploy-app: image import-image
 	kubectl config use-context k3d-coredns-crd
-	kubectl apply -f terratest/example/ns.yaml 
+	kubectl apply -f terratest/example/ns.yaml
 	kubectl create -n coredns configmap geodata --from-file terratest/geogen/geoip.mmdb || true
 	kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/external-dns/master/docs/contributing/crd-source/crd-manifest.yaml
 	helm repo add coredns https://coredns.github.io/helm
@@ -73,6 +73,7 @@ deploy-app: image import-image
 	helm upgrade -i coredns -n coredns charts/coredns \
 		-f terratest/helm_values.yaml \
 		--set coredns.image.tag=${TAG}
+	kubectl apply -f terratest/coredns-tcp-svc.yaml
 
 # updates source code with license headers
 license: golic
