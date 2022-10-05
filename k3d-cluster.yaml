@@ -4,6 +4,9 @@ metadata:
   name: coredns-crd
 network: k3d-action-bridge-network
 ports:
+- port: 1053:30053/tcp
+  nodeFilters:
+  - loadbalancer
 - port: 1053:53/udp
   nodeFilters:
   - loadbalancer
