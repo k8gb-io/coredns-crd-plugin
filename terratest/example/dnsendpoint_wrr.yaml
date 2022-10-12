@@ -1,0 +1,303 @@
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: weight-eu-5-us-5
+  labels:
+    k8gb.absa.oss/dnstype: local
+  annotations:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: localtargets-weight-eu-5-us-5.example.org
+    recordTTL: 30
+    recordType: A
+    targets:
+    - 172.18.0.5
+    - 172.18.0.6
+  - dnsName: weight-eu-5-us-5.example.org
+    recordTTL: 30
+    recordType: A
+    labels:
+      strategy: roundRobin
+      weight-eu-0-5: 172.18.0.3
+      weight-eu-1-5: 172.18.0.4
+      weight-us-0-5: 172.18.0.5
+      weight-us-1-5: 172.18.0.6
+    targets:
+    - 172.18.0.5
+    - 172.18.0.6
+    - 172.18.0.3
+    - 172.18.0.4
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: weight-eu-0-us-5
+  labels:
+    k8gb.absa.oss/dnstype: local
+  annotations:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: localtargets-weight-eu-0-us-5.example.org
+    recordTTL: 30
+    recordType: A
+    targets:
+    - 172.18.0.5
+    - 172.18.0.6
+  - dnsName: weight-eu-0-us-1.example.org
+    recordTTL: 30
+    recordType: A
+    labels:
+      strategy: roundRobin
+      weight-eu-0-0: 172.18.0.3
+      weight-eu-1-0: 172.18.0.4
+      weight-us-0-1: 172.18.0.5
+      weight-us-1-1: 172.18.0.6
+    targets:
+    - 172.18.0.5
+    - 172.18.0.6
+    - 172.18.0.3
+    - 172.18.0.4
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: weight-eu-0
+  labels:
+    k8gb.absa.oss/dnstype: local
+  annotations:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: localtargets-weight-eu-0.example.org
+    recordTTL: 30
+    recordType: A
+    targets:
+    - 172.18.0.3
+    - 172.18.0.4
+  - dnsName: weight-eu-0.example.org
+    recordTTL: 30
+    recordType: A
+    labels:
+      strategy: roundRobin
+      weight-eu-0-0: 172.18.0.3
+      weight-eu-1-0: 172.18.0.4
+    targets:
+    - 172.18.0.3
+    - 172.18.0.4
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: weight-no-localtargets
+  labels:
+    k8gb.absa.oss/dnstype: local
+  annotations:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: weight-no-localtargets.example.org
+    recordTTL: 30
+    recordType: A
+    labels:
+      strategy: roundRobin
+      weight-eu-0-5: 172.18.0.3
+      weight-eu-1-5: 172.18.0.4
+      weight-us-0-5: 172.18.0.5
+      weight-us-1-5: 172.18.0.6
+    targets:
+    - 172.18.0.5
+    - 172.18.0.6
+    - 172.18.0.3
+    - 172.18.0.4
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: weight-no-labels
+  labels:
+    k8gb.absa.oss/dnstype: local
+  annotations:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: weight-no-labels.example.org
+    recordTTL: 30
+    recordType: A
+    labels:
+      strategy: roundRobin
+    targets:
+    - 172.18.0.4
+    - 172.18.0.3
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: weight-no-labels-and-targets
+  labels:
+    k8gb.absa.oss/dnstype: local
+  annotations:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: weight-no-labels-and-targets.example.org
+    recordTTL: 30
+    recordType: A
+    labels:
+      strategy: roundRobin
+    targets:
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: weight-less-labels-than-targets
+  labels:
+    k8gb.absa.oss/dnstype: local
+  annotations:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: weight-less-labels-than-targets.example.org
+    recordTTL: 30
+    recordType: A
+    labels:
+      strategy: roundRobin
+      weight-eu-0-1: 172.18.0.3
+      weight-eu-1-1: 172.18.0.4
+    targets:
+    - 172.18.0.5
+    - 172.18.0.6
+    - 172.18.0.3
+    - 172.18.0.4
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: weight-less-targets-than-labels
+  labels:
+    k8gb.absa.oss/dnstype: local
+  annotations:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: weight-less-targets-than-labels.example.org
+    recordTTL: 30
+    recordType: A
+    labels:
+      strategy: roundRobin
+      weight-eu-0-1: 172.18.0.3
+      weight-eu-1-1: 172.18.0.4
+      weight-us-0-2: 172.18.0.5
+      weight-us-1-2: 172.18.0.6
+    targets:
+    - 172.18.0.5
+    - 172.18.0.6
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: targets-has-different-ips
+  labels:
+    k8gb.absa.oss/dnstype: local
+  annotations:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: targets-has-different-ips.example.org
+    recordTTL: 30
+    recordType: A
+    labels:
+      strategy: roundRobin
+      weight-eu-0-1: 172.18.0.3
+      weight-eu-1-1: 172.18.0.4
+      weight-us-0-2: 172.18.0.5
+      weight-us-1-2: 172.18.0.6
+    targets:
+    - 172.18.0.5
+    - 172.18.0.6
+    - 172.18.0.7
+    - 172.18.0.8
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: unknown-strategy
+  labels:
+    k8gb.absa.oss/dnstype: local
+  annotations:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: unknown-strategy.example.org
+    recordTTL: 30
+    recordType: A
+    labels:
+      strategy: unknown-strategy
+      weight-eu-0-1: 172.18.0.3
+      weight-eu-1-1: 172.18.0.4
+      weight-us-0-2: 172.18.0.5
+      weight-us-1-2: 172.18.0.6
+    targets:
+    - 172.18.0.5
+    - 172.18.0.6
+    - 172.18.0.3
+    - 172.18.0.4
+---
+  apiVersion: externaldns.k8s.io/v1alpha1
+  kind: DNSEndpoint
+  metadata:
+    name: shuffled-order-but-ok
+    labels:
+      k8gb.absa.oss/dnstype: local
+    annotations:
+      k8gb.absa.oss/dnstype: local
+  spec:
+    endpoints:
+    - dnsName: shuffled-order-but-ok.example.org
+      recordTTL: 30
+      recordType: A
+      labels:
+        strategy: unknown-strategy
+        weight-us-1-1: 172.18.0.6
+        weight-eu-0-1: 172.18.0.3
+        weight-us-0-1: 172.18.0.5
+        weight-eu-1-1: 172.18.0.4
+      targets:
+      - 172.18.0.4
+      - 172.18.0.6
+      - 172.18.0.3
+      - 172.18.0.5
+---
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: weight-eu-1-us-4
+  labels:
+    k8gb.absa.oss/dnstype: local
+  annotations:
+    k8gb.absa.oss/dnstype: local
+spec:
+  endpoints:
+  - dnsName: localtargets-weight-eu-5-us-5.example.org
+    recordTTL: 30
+    recordType: A
+    targets:
+    - 172.18.0.5
+    - 172.18.0.6
+  - dnsName: weight-eu-1-us-4.example.org
+    recordTTL: 30
+    recordType: A
+    labels:
+      strategy: roundRobin
+      weight-eu-0-1: 172.18.0.3
+      weight-eu-1-1: 172.18.0.4
+      weight-us-0-4: 172.18.0.5
+      weight-us-1-4: 172.18.0.6
+    targets:
+    - 172.18.0.5
+    - 172.18.0.6
+    - 172.18.0.3
+    - 172.18.0.4

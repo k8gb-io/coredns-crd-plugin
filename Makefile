@@ -97,6 +97,7 @@ mocks:
 	mockgen -destination=common/mocks/rw_mock.go -package=mocks github.com/miekg/dns ResponseWriter
 
 goimports:
+	go install golang.org/x/tools/cmd/goimports@latest
 	goimports -w ./
 
 check:	build goimports lint mocks test license

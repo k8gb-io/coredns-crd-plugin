@@ -30,7 +30,7 @@ jobs:
         do_not_skip: '["workflow_dispatch", "schedule"]'
 
   terratest:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     env:
       TAG: "ci"
     steps:
@@ -39,7 +39,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: 1.18
       - name: build
         run: make build
       - name: build image

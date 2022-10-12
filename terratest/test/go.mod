@@ -1,9 +1,9 @@
 module testterratest
 
-go 1.17
+go 1.18
 
 require (
-	github.com/gruntwork-io/terratest v0.38.6
+	github.com/gruntwork-io/terratest v0.40.22
 	github.com/miekg/dns v1.1.49
 	github.com/stretchr/testify v1.7.0
 	k8s.io/api v0.20.6
@@ -44,7 +44,7 @@ require (
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20210726213435-c6fcb2dbf985 // indirect
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c // indirect
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
+	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e // indirect
 	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
 	golang.org/x/text v0.3.6 // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
