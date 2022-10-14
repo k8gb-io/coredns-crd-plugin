@@ -98,7 +98,7 @@ func TestWeightRoundRobinCornerCases(t *testing.T) {
 			"weight-no-labels.example.org",
 			[]string{"172.18.0.3", "172.18.0.4"},
 			func(ips []string) bool {
-				return same(ips, []string{"172.18.0.4", "172.18.0.3"})
+				return containsValues(ips, []string{"172.18.0.4", "172.18.0.3"})
 			},
 		},
 		{

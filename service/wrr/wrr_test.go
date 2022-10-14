@@ -155,7 +155,9 @@ func TestWeightRoundRobin(t *testing.T) {
 					test.A("alpha.cloud.example.com.		300	IN	A			10.240.0.1"),
 				},
 			},
-			writer:        newFakeWriter(ctrl, func(w *mocks.MockResponseWriter) {}),
+			writer: newFakeWriter(ctrl, func(w *mocks.MockResponseWriter) {
+				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(1)
+			}),
 			expectedError: false,
 			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
@@ -465,13 +467,14 @@ func TestWeightRoundRobin(t *testing.T) {
 		},
 	}
 
-	for _, unit := range tests {
-		t.Run(unit.name, func(t *testing.T) {
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
 			wrr := NewWeightRoundRobin()
-			k8sctrl.Resources.DNSEndpoint.Lookup = unit.lookup
-			code, err := wrr.ServeDNS(context.TODO(), unit.writer.w, unit.msg)
-			assert.Equal(t, unit.rcode, code)
-			assert.Equal(t, unit.expectedError, err != nil)
+			test.msg.Question = append(test.msg.Question, dns.Question{Qtype: dns.TypeA})
+			k8sctrl.Resources.DNSEndpoint.Lookup = test.lookup
+			code, err := wrr.ServeDNS(context.TODO(), test.writer.w, test.msg)
+			assert.Equal(t, test.rcode, code)
+			assert.Equal(t, test.expectedError, err != nil)
 		})
 
 	}
