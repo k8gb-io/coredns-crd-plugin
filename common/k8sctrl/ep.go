@@ -70,7 +70,7 @@ func (lep LocalDNSEndpoint) extractGeo(endpoint *endpoint.Endpoint, clientIP net
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
+	defer db.Close() // nolint:errcheck
 
 	clientGeo := &geo{}
 	err = db.Lookup(clientIP, clientGeo)

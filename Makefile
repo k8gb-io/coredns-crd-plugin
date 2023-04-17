@@ -25,6 +25,8 @@ TAG ?= latest
 # Image URL to use all building/pushing image targets
 IMG ?= $(REGISTRY)/$(BIN)
 
+GOLINT_VERSION ?= v1.51.2
+
 # find or download golic
 # download golic if necessary
 golic:
@@ -42,9 +44,11 @@ else
 GOLIC=$(shell which golic)
 endif
 
-# run all linters from .golangci.yaml; see: https://golangci-lint.run/usage/install/#local-installation
+# run glonag-ci
+.PHONY: lint
 lint:
-	golangci-lint run
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLINT_VERSION)
+	$(GOBIN)/golangci-lint run
 
 build:
 	GOOS=linux CGO_ENABLED=0 go build cmd/coredns.go

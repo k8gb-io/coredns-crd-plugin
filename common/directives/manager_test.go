@@ -139,7 +139,7 @@ func TestInserting(t *testing.T) {
 	}
 }
 
-func compareExact(t *testing.T, a, b []string) (ok bool) {
+func compareExact(t *testing.T, a, b []string) (ok bool) { // nolint:unparam
 	if len(a) != len(b) {
 		return assert.Fail(t, fmt.Sprintf("%v not same as %v", a, b))
 	}
