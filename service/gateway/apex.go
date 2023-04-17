@@ -28,7 +28,7 @@ import (
 )
 
 // serveApex serves request that hit the zone' apex. A reply is written back to the client.
-func (gw *Gateway) serveApex(state request.Request) (int, error) {
+func (gw *Gateway) serveApex(state request.Request) int {
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
 	switch state.QType() {
@@ -51,11 +51,11 @@ func (gw *Gateway) serveApex(state request.Request) (int, error) {
 	if err := state.W.WriteMsg(m); err != nil {
 		log.Errorf("Failed to send a response: %s", err)
 	}
-	return 0, nil
+	return 0
 }
 
 // serveSubApex serves requests that hit the zones fake 'dns' subdomain where our nameservers live.
-func (gw *Gateway) serveSubApex(state request.Request) (int, error) {
+func (gw *Gateway) serveSubApex(state request.Request) {
 	base, _ := dnsutil.TrimZone(state.Name(), state.Zone)
 
 	m := new(dns.Msg)
@@ -69,7 +69,7 @@ func (gw *Gateway) serveSubApex(state request.Request) (int, error) {
 		if err := state.W.WriteMsg(m); err != nil {
 			log.Errorf("Failed to send a response: %s", err)
 		}
-		return 0, nil
+		return
 	case 2:
 		nl, _ := dns.NextLabel(base, 0)
 		ns := base[:nl]
@@ -80,7 +80,7 @@ func (gw *Gateway) serveSubApex(state request.Request) (int, error) {
 			if err := state.W.WriteMsg(m); err != nil {
 				log.Errorf("Failed to send a response: %s", err)
 			}
-			return 0, nil
+			return
 		}
 
 		addr := gw.externalAddrFunc(state)
@@ -106,7 +106,7 @@ func (gw *Gateway) serveSubApex(state request.Request) (int, error) {
 		if err := state.W.WriteMsg(m); err != nil {
 			log.Errorf("Failed to send a response: %s", err)
 		}
-		return 0, nil
+		return
 
 	case 1:
 		// nodata for the dns empty non-terminal
@@ -114,7 +114,7 @@ func (gw *Gateway) serveSubApex(state request.Request) (int, error) {
 		if err := state.W.WriteMsg(m); err != nil {
 			log.Errorf("Failed to send a response: %s", err)
 		}
-		return 0, nil
+		return
 	}
 }
 

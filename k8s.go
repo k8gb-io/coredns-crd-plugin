@@ -27,16 +27,7 @@ import (
 	dnsendpoint "github.com/AbsaOSS/k8s_crd/extdns"
 
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/tools/cache"
 )
-
-// KubeController stores the current runtime configuration and cache
-type KubeController struct {
-	client      dnsendpoint.ExtDNSInterface
-	controllers []cache.SharedIndexInformer
-	labelFilter string
-	hasSynced   bool
-}
 
 // RunKubeController kicks off the k8s controllers
 func RunKubeController(ctx context.Context, cfg *restclient.Config, filter string) (*k8sctrl.KubeController, error) {
