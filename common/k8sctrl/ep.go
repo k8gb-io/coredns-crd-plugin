@@ -41,30 +41,6 @@ func (lep LocalDNSEndpoint) String() string {
 	return fmt.Sprintf("%s: %v, Targets: %v, Labels: %v", lep.DNSName, lep.TTL, lep.Targets, lep.Labels)
 }
 
-func extractLocalEndpoint(ep *endpoint.DNSEndpoint, ip net.IP, host string) (result LocalDNSEndpoint) {
-	result = LocalDNSEndpoint{}
-	for _, e := range ep.Spec.Endpoints {
-		if e.DNSName == host {
-			result.DNSName = host
-			result.Labels = e.Labels
-			result.TTL = e.RecordTTL
-			result.Targets = e.Targets
-			if e.Labels["strategy"] == "geoip" {
-				targets := result.extractGeo(e, ip)
-				if len(targets) > 0 {
-					result.Targets = targets
-				}
-			}
-			break
-		}
-	}
-	return result
-}
-
-func (lep LocalDNSEndpoint) isEmpty() bool {
-	return len(lep.Targets) == 0 && (len(lep.Labels) == 0) && (lep.TTL == 0)
-}
-
 func (lep LocalDNSEndpoint) extractGeo(endpoint *endpoint.Endpoint, clientIP net.IP) (result []string) {
 	db, err := maxminddb.Open("geoip.mmdb")
 	if err != nil {

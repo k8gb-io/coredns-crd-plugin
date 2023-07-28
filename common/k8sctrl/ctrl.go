@@ -139,13 +139,60 @@ func endpointHostnameIndexFunc(obj interface{}) ([]string, error) {
 
 func (ctrl *KubeController) getEndpointByName(host string, clientIP net.IP) (lep LocalDNSEndpoint) {
 	log.Infof("Index key %+v", host)
-	objs, _ := ctrl.epc.GetIndexer().ByIndex(endpointHostnameIndex, strings.ToLower(host))
-	for _, obj := range objs {
+	endpoints := ctrl.getEndpointsByCaseInsensitiveName(host, clientIP)
+	lep = ctrl.margeLocalDNSEndpoints(host, endpoints)
+	return lep
+}
+
+// The function tries to find all case sensitive variants.  Returns a map where the call is hostname and the value is LocalDNSEndpoint
+func (ctrl *KubeController) getEndpointsByCaseInsensitiveName(host string, clientIP net.IP) (result map[string]LocalDNSEndpoint) {
+
+	// The function extracts LocalDNSEndpoints from *DNSEndpoint. The function is hardwired with a case-sensitive extraction scenario and is only used in a
+	// single location, so it is currently declared inside the calling function.
+	extractLocalEndpoints := func(ep *endpoint.DNSEndpoint, ip net.IP, host string) (result []LocalDNSEndpoint) {
+		result = []LocalDNSEndpoint{}
+		for _, e := range ep.Spec.Endpoints {
+			if strings.EqualFold(e.DNSName, host) {
+				r := LocalDNSEndpoint{}
+				r.DNSName = e.DNSName
+				r.Labels = e.Labels
+				r.TTL = e.RecordTTL
+				r.Targets = e.Targets
+				if e.Labels["strategy"] == "geoip" {
+					targets := r.extractGeo(e, ip)
+					if len(targets) > 0 {
+						r.Targets = targets
+					}
+				}
+				result = append(result, r)
+			}
+		}
+		return result
+	}
+
+	epList := ctrl.epc.GetIndexer().List()
+	result = make(map[string]LocalDNSEndpoint, 0)
+	for _, obj := range epList {
 		ep := obj.(*endpoint.DNSEndpoint)
-		lep = extractLocalEndpoint(ep, clientIP, host)
-		if !lep.isEmpty() {
-			break
+		extracts := extractLocalEndpoints(ep, clientIP, host)
+		for _, extracted := range extracts {
+			if strings.EqualFold(extracted.DNSName, host) {
+				result[extracted.DNSName] = extracted
+				log.Debugf("including DNSEndpoint: %s", extracted.String())
+			}
 		}
 	}
-	return lep
+	return result
+}
+
+func (ctrl *KubeController) margeLocalDNSEndpoints(host string, endpoints map[string]LocalDNSEndpoint) LocalDNSEndpoint {
+	result := LocalDNSEndpoint{
+		DNSName: host,
+	}
+	result.Labels = endpoints[host].Labels
+	result.TTL = endpoints[host].TTL
+	for _, ep := range endpoints {
+		result.Targets = append(result.Targets, ep.Targets...)
+	}
+	return result
 }
