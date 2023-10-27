@@ -63,6 +63,15 @@ func (gw *Gateway) ServeDNS(_ context.Context, w dns.ResponseWriter, r *dns.Msg)
 	qname := state.QName()
 	zone := plugin.Zones(gw.opts.zones).Matches(qname)
 	clientIP = netutils.ExtractEdnsSubnet(r)
+	if clientIP == nil {
+		ip, _, err := net.SplitHostPort(w.RemoteAddr().String())
+		if err != nil {
+			clientIP = net.ParseIP(w.RemoteAddr().String())
+		} else {
+			clientIP = net.ParseIP(ip)
+		}
+	}
+	log.Debugf("Using source address %v", clientIP)
 
 	if zone == "" {
 		log.Infof("Request %s has not matched any zones %v", qname, gw.opts.zones)
