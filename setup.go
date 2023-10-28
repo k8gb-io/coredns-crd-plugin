@@ -32,14 +32,16 @@ import (
 )
 
 type args struct {
-	annotation     string
-	apex           string
-	filter         string
-	kubecontroller string
-	loadbalance    string
-	negttl         uint32
-	ttl            uint32
-	zones          []string
+	annotation      string
+	apex            string
+	filter          string
+	kubecontroller  string
+	loadbalance     string
+	negttl          uint32
+	ttl             uint32
+	zones           []string
+	geoDataFilePath string
+	geoDataField    string
 }
 
 const thisPlugin = "k8s_crd"
@@ -62,7 +64,7 @@ func setup(c *caddy.Controller) error {
 	if err != nil {
 		return plugin.Error(thisPlugin, err)
 	}
-	gwopts := gateway.NewGatewayOpts(rawArgs.annotation, rawArgs.apex, rawArgs.ttl, rawArgs.negttl, rawArgs.zones)
+	gwopts := gateway.NewGatewayOpts(rawArgs.annotation, rawArgs.apex, rawArgs.geoDataFilePath, rawArgs.geoDataField, rawArgs.ttl, rawArgs.negttl, rawArgs.zones)
 	_ = k8sCRD.container.Register(gateway.NewGateway(gwopts))
 	if rawArgs.loadbalance == weightRoundRobin {
 		_ = k8sCRD.container.Register(wrr.NewWeightRoundRobin())
@@ -123,6 +125,12 @@ func parse(c *caddy.Controller) (args, error) {
 			case "loadbalance":
 				log.Infof("loadbalance: %+v", args)
 				a.loadbalance = args[0]
+			case "geodatafilepath":
+				log.Infof("geodatafilepath: %+v", args)
+				a.geoDataFilePath = args[0]
+			case "geodatafield":
+				log.Infof("geodatafield: %+v", args)
+				a.geoDataField = args[0]
 			default:
 				return a, c.Errf("Unknown property '%s'", c.Val())
 			}

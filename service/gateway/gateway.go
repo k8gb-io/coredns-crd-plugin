@@ -88,7 +88,7 @@ func (gw *Gateway) ServeDNS(_ context.Context, w dns.ResponseWriter, r *dns.Msg)
 		}
 	}
 
-	var ep = k8sctrl.Resources.DNSEndpoint.Lookup(indexKey, clientIP)
+	var ep = k8sctrl.Resources.DNSEndpoint.Lookup(indexKey, clientIP, gw.opts.geoDataFilePath, gw.opts.geoDataField...)
 	log.Debugf("Computed response addresses %v", ep.Targets)
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
@@ -160,7 +160,7 @@ func (gw *Gateway) selfAddress(state request.Request) (records []dns.RR) {
 		index = defaultSvc
 	}
 
-	var ep = k8sctrl.Resources.DNSEndpoint.Lookup(index, net.ParseIP(state.IP()))
+	var ep = k8sctrl.Resources.DNSEndpoint.Lookup(index, net.ParseIP(state.IP()), gw.opts.geoDataFilePath, gw.opts.geoDataField...)
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
 	return gw.A(state, netutils.TargetToIP(ep.Targets), ep.TTL)
