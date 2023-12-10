@@ -42,7 +42,7 @@ type KubeController struct {
 	epc         cache.SharedIndexInformer
 }
 
-type LookupEndpoint func(indexKey string, clientIP net.IP) (result LocalDNSEndpoint)
+type LookupEndpoint func(indexKey string, clientIP net.IP, geoDataFilePath string, geoDataFieldPath ...string) (result LocalDNSEndpoint)
 
 type ResourceWithLookup struct {
 	Name   string
@@ -137,19 +137,19 @@ func endpointHostnameIndexFunc(obj interface{}) ([]string, error) {
 	return hostnames, nil
 }
 
-func (ctrl *KubeController) getEndpointByName(host string, clientIP net.IP) (lep LocalDNSEndpoint) {
+func (ctrl *KubeController) getEndpointByName(host string, clientIP net.IP, geoDataFilePath string, geoDataFieldPath ...string) (lep LocalDNSEndpoint) {
 	log.Infof("Index key %+v", host)
-	endpoints := ctrl.getEndpointsByCaseInsensitiveName(host, clientIP)
+	endpoints := ctrl.getEndpointsByCaseInsensitiveName(host, clientIP, geoDataFilePath, geoDataFieldPath...)
 	lep = ctrl.margeLocalDNSEndpoints(host, endpoints)
 	return lep
 }
 
 // The function tries to find all case sensitive variants.  Returns a map where the call is hostname and the value is LocalDNSEndpoint
-func (ctrl *KubeController) getEndpointsByCaseInsensitiveName(host string, clientIP net.IP) (result map[string]LocalDNSEndpoint) {
+func (ctrl *KubeController) getEndpointsByCaseInsensitiveName(host string, clientIP net.IP, geoDataFilePath string, geoDataFieldPath ...string) (result map[string]LocalDNSEndpoint) {
 
 	// The function extracts LocalDNSEndpoints from *DNSEndpoint. The function is hardwired with a case-sensitive extraction scenario and is only used in a
 	// single location, so it is currently declared inside the calling function.
-	extractLocalEndpoints := func(ep *endpoint.DNSEndpoint, ip net.IP, host string) (result []LocalDNSEndpoint) {
+	extractLocalEndpoints := func(ep *endpoint.DNSEndpoint, ip net.IP, host string, geoDataFieldPath ...string) (result []LocalDNSEndpoint) {
 		result = []LocalDNSEndpoint{}
 		for _, e := range ep.Spec.Endpoints {
 			if strings.EqualFold(e.DNSName, host) {
@@ -159,7 +159,7 @@ func (ctrl *KubeController) getEndpointsByCaseInsensitiveName(host string, clien
 				r.TTL = e.RecordTTL
 				r.Targets = e.Targets
 				if e.Labels["strategy"] == "geoip" {
-					targets := r.extractGeo(e, ip)
+					targets := r.extractGeo(e, ip, geoDataFilePath, geoDataFieldPath...)
 					if len(targets) > 0 {
 						r.Targets = targets
 					}
@@ -174,7 +174,7 @@ func (ctrl *KubeController) getEndpointsByCaseInsensitiveName(host string, clien
 	result = make(map[string]LocalDNSEndpoint, 0)
 	for _, obj := range epList {
 		ep := obj.(*endpoint.DNSEndpoint)
-		extracts := extractLocalEndpoints(ep, clientIP, host)
+		extracts := extractLocalEndpoints(ep, clientIP, host, geoDataFieldPath...)
 		for _, extracted := range extracts {
 			if strings.EqualFold(extracted.DNSName, host) {
 				result[extracted.DNSName] = extracted

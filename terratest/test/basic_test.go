@@ -35,7 +35,6 @@ import (
 )
 
 func TestBasicExample(t *testing.T) {
-	t.Parallel()
 
 	var coreDNSPods []corev1.Pod
 

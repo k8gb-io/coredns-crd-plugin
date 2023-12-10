@@ -23,12 +23,11 @@ import (
 	"net"
 
 	"github.com/oschwald/maxminddb-golang"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/external-dns/endpoint"
 )
 
-type geo struct {
-	DC string `maxminddb:"datacenter"`
-}
+type geo map[string]interface{}
 
 type LocalDNSEndpoint struct {
 	Targets []string
@@ -41,37 +40,64 @@ func (lep LocalDNSEndpoint) String() string {
 	return fmt.Sprintf("%s: %v, Targets: %v, Labels: %v", lep.DNSName, lep.TTL, lep.Targets, lep.Labels)
 }
 
-func (lep LocalDNSEndpoint) extractGeo(endpoint *endpoint.Endpoint, clientIP net.IP) (result []string) {
-	db, err := maxminddb.Open("geoip.mmdb")
+func (lep LocalDNSEndpoint) extractGeo(endpoint *endpoint.Endpoint, clientIP net.IP, geoDataFilePath string, geoDataFieldPath ...string) (result []string) {
+	if geoDataFilePath == "" {
+		return nil
+	}
+
+	db, err := maxminddb.Open(geoDataFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close() // nolint:errcheck
 
-	clientGeo := &geo{}
-	err = db.Lookup(clientIP, clientGeo)
+	var clientGeo geo
+	err = db.Lookup(clientIP, &clientGeo)
 	if err != nil {
 		return nil
 	}
 
-	if clientGeo.DC == "" {
-		log.Infof("empty DC %+v", clientGeo)
+	log.Infof("extracted client geo data: %+v", clientGeo)
+
+	if len(geoDataFieldPath) == 0 {
+		log.Info("no geo data field specified")
 		return result
 	}
 
-	log.Infof("clientDC: %+v", clientGeo)
+	clientGeoData, found, err := unstructured.NestedString(clientGeo, geoDataFieldPath...)
+	if err != nil {
+		log.Infof("error retrieving client geo data for field %+v: %v", geoDataFieldPath, err)
+		return result
+	}
+
+	if !found || clientGeoData == "" {
+		log.Infof("client geo data field %+v not found", geoDataFieldPath)
+		return result
+	}
+
+	log.Infof("client geo data field value for %+v: %+v", geoDataFieldPath, clientGeoData)
 
 	for _, ip := range endpoint.Targets {
-		geoData := &geo{}
+		var endpointGeo geo
 		log.Infof("processing IP %+v", ip)
-		err = db.Lookup(net.ParseIP(ip), geoData)
+		err = db.Lookup(net.ParseIP(ip), &endpointGeo)
 		if err != nil {
 			log.Error(err)
 			continue
 		}
+		endpointGeoData, found, err := unstructured.NestedString(endpointGeo, geoDataFieldPath...)
+		if err != nil {
+			log.Infof("error retrieving endpoint geo data for field %+v: %v", geoDataFieldPath, err)
+			return result
+		}
 
-		log.Infof("IP info: %+v", geoData.DC)
-		if clientGeo.DC == geoData.DC {
+		if !found || endpointGeoData == "" {
+			log.Infof("endpoint geo data field %+v not found", geoDataFieldPath)
+			return result
+		}
+
+		log.Infof("endpoint data field value for %+v: %+v", geoDataFieldPath, clientGeoData)
+		if clientGeoData == endpointGeoData {
 			result = append(result, ip)
 		}
 	}

@@ -139,7 +139,7 @@ func TestWeightRoundRobin(t *testing.T) {
 			},
 			writer:        newFakeWriter(ctrl, func(w *mocks.MockResponseWriter) {}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Targets: []string{"10.0.0.1", "10.0.0.2"},
@@ -159,7 +159,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(1)
 			}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  map[string]string{"strategy": "roundrobin"},
@@ -178,7 +178,7 @@ func TestWeightRoundRobin(t *testing.T) {
 			},
 			writer:        newFakeWriter(ctrl, func(w *mocks.MockResponseWriter) {}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  map[string]string{"strategy": "roundrobin", "weight-0-eu": "10.240.0.1"},
@@ -200,7 +200,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(1)
 			}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  map[string]string{"strategy": "roundrobin", "weight-0-eu-1": "10.240.0.1", "weight-0-us-1": "10.240.0.2"},
@@ -221,7 +221,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(1)
 			}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  map[string]string{"strategy": "roundrobin", "weight-eu-0-1": "10.240.0.1"},
@@ -242,7 +242,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(1)
 			}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  map[string]string{"strategy": "roundrobin", "weight-eu-0-100": "10.240.0.1"},
@@ -264,7 +264,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(0)
 			}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  map[string]string{"strategy": "roundrobin", "weight-us-0-50": "10.240.0.1"},
@@ -286,7 +286,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(0)
 			}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  map[string]string{"strategy": "roundrobin", "weight-eu-0-50": "10.240.0.1", "weight-us-0-50": "10.240.0.2"},
@@ -308,7 +308,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(fmt.Errorf("broken writer")).Times(0)
 			}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  map[string]string{"strategy": "roundrobin", "weight-eu-0-50": "10.240.0.1", "weight-us-0-50": "10.240.1.1"},
@@ -330,7 +330,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(1)
 			}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  map[string]string{"strategy": "roundrobin", "weight-us-0-50": "10.240.0.1", "weight-eu-0-50": "10.240.1.1"},
@@ -351,7 +351,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(fmt.Errorf("broken writer")).Times(1)
 			}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  map[string]string{"strategy": "roundrobin", "weight-eu-0-100": "10.240.0.1"},
@@ -376,7 +376,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).Return(nil).Times(1)
 			}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels: map[string]string{"strategy": "roundrobin",
@@ -400,7 +400,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).DoAndReturn(rs1.checkExpected).Times(1)
 			}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  rs1.labels,
@@ -419,7 +419,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).DoAndReturn(rs4.checkExpected).Times(1)
 			}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  rs4.labels,
@@ -438,7 +438,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				w.EXPECT().WriteMsg(gomock.Any()).DoAndReturn(rs2.checkExpected).Times(1)
 			}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  rs2.labels,
@@ -456,7 +456,7 @@ func TestWeightRoundRobin(t *testing.T) {
 			writer: newFakeWriter(ctrl, func(w *mocks.MockResponseWriter) {
 			}),
 			expectedError: false,
-			lookup: func(indexKey string, clientIP net.IP) (result k8sctrl.LocalDNSEndpoint) {
+			lookup: func(indexKey string, clientIP net.IP, _ string, _ ...string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  rs3.labels,
