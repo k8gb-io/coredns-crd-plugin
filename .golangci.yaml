@@ -1,0 +1,25 @@
+run:
+  timeout: 120s
+
+output:
+  formats:
+  - format: colored-line-number
+
+linters:
+  disable-all: true
+  enable:
+  - gocyclo
+  - unconvert
+  - goimports
+  - unused
+  - misspell
+  - nakedret
+  - errcheck
+  - ineffassign
+  - goconst
+  - govet
+  - unparam
+  - gofmt
+
+issues:
+  exclude-use-default: false

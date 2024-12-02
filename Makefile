@@ -25,7 +25,12 @@ TAG ?= latest
 # Image URL to use all building/pushing image targets
 IMG ?= $(REGISTRY)/$(BIN)
 
-GOLINT_VERSION ?= v1.51.2
+GOLINT_VERSION ?= v1.60.3
+
+# create GOBIN if not specified
+ifndef GOBIN
+GOBIN=$(shell go env GOPATH)/bin
+endif
 
 # find or download golic
 # download golic if necessary
@@ -57,11 +62,14 @@ clean:
 	go clean
 	rm -f coredns
 
-image:
+image: build
 	docker build . -t ${IMG}:${TAG}
 
 create-local-cluster:
 	k3d cluster create -c k3d-cluster.yaml
+
+destroy-local-cluster:
+	k3d cluster delete coredns-crd
 
 import-image:
 	k3d image import -c coredns-crd absaoss/k8s_crd:${TAG}
@@ -93,7 +101,7 @@ test:
 	go test $$(go list ./... | grep -Ev '/mocks|/terratest|/netutils|/cmd') --cover
 
 mocks:
-	go install github.com/golang/mock/mockgen@v1.5.0
+	go install go.uber.org/mock/mockgen@v0.4.0
 	mockgen -destination=common/mocks/client_mock.go -package=mocks k8s.io/client-go/rest Interface
 	mockgen -destination=common/mocks/cache_mock.go -package=mocks k8s.io/client-go/tools/cache SharedIndexInformer
 	mockgen -destination=common/mocks/index_mock.go -package=mocks k8s.io/client-go/tools/cache Indexer
