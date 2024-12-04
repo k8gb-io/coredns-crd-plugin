@@ -1,0 +1,17 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["*"],
+      "groupName": "All dependencies",
+      "separateMajorMinor": false
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchPaths": ["go.mod", "terratest/test/go.mod"]
+    }
+  ]
+}
