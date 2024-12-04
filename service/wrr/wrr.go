@@ -24,8 +24,6 @@ import (
 	"net"
 	"strings"
 
-	"github.com/coredns/coredns/plugin/loadbalance"
-
 	"github.com/AbsaOSS/k8s_crd/common/k8sctrl"
 	"github.com/AbsaOSS/k8s_crd/common/netutils"
 
@@ -59,7 +57,8 @@ func (wrr *WeightRoundRobin) ServeDNS(_ context.Context, w dns.ResponseWriter, r
 	var ep = k8sctrl.Resources.DNSEndpoint.Lookup(indexKey, clientIP, "")
 	// weights are not defined, labels doesnt exists
 	if len(ep.Labels) == 1 && strings.ToUpper(ep.Labels["strategy"]) == "ROUNDROBIN" {
-		if err := (&loadbalance.RoundRobinResponseWriter{ResponseWriter: w}).WriteMsg(r); err != nil {
+		roundRobinShuffle(r.Answer)
+		if err := w.WriteMsg(r); err != nil {
 			return dns.RcodeServerFailure, fmt.Errorf("[random] %s", err)
 		}
 		_, ansIP, _ := netutils.ParseAnswerSection(r.Answer)
@@ -114,4 +113,24 @@ func (wrr *WeightRoundRobin) updateAnswers(g groups, answers []dns.RR) (newAnswe
 		log.Warningf("[%s] exist as label but missing in incoming message", ip)
 	}
 	return newAnswers
+}
+
+// taken from https://github.com/coredns/coredns/blob/master/plugin/loadbalance/loadbalance.go
+func roundRobinShuffle(records []dns.RR) {
+	switch l := len(records); l {
+	case 0, 1:
+		break
+	case 2:
+		if dns.Id()%2 == 0 {
+			records[0], records[1] = records[1], records[0]
+		}
+	default:
+		for j := 0; j < l; j++ {
+			p := j + (int(dns.Id()) % (l - j))
+			if j == p {
+				continue
+			}
+			records[j], records[p] = records[p], records[j]
+		}
+	}
 }

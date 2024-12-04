@@ -30,9 +30,9 @@ import (
 
 	"github.com/AbsaOSS/k8s_crd/common/mocks"
 	"github.com/coredns/coredns/plugin/test"
-	"github.com/golang/mock/gomock"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 type fakeWriter struct {

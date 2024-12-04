@@ -26,9 +26,9 @@ import (
 	"github.com/AbsaOSS/k8s_crd/common/mocks"
 
 	"github.com/coredns/coredns/plugin"
-	"github.com/golang/mock/gomock"
 	dns "github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 type fakePlugin struct {
