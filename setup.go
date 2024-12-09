@@ -25,7 +25,7 @@ import (
 	"github.com/AbsaOSS/k8s_crd/service/gateway"
 	"github.com/AbsaOSS/k8s_crd/service/wrr"
 
-	"github.com/coredns/caddy"
+	caddy "github.com/caddyserver/caddy/v2"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
