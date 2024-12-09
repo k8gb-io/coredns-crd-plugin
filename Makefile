@@ -25,7 +25,7 @@ TAG ?= latest
 # Image URL to use all building/pushing image targets
 IMG ?= $(REGISTRY)/$(BIN)
 
-GOLINT_VERSION ?= v1.60.3
+GOLINT_VERSION ?= v1.62.2
 
 # create GOBIN if not specified
 ifndef GOBIN
