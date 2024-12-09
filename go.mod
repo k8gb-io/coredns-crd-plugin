@@ -2,16 +2,16 @@ module github.com/AbsaOSS/k8s_crd
 
 go 1.23
 
-toolchain go1.23.3
+toolchain go1.23.4
 
 require (
-	github.com/coredns/caddy v1.1.2-0.20241029205200-8de985351a98
+	github.com/coredns/caddy/v2 v2.1.1
 	github.com/coredns/coredns v1.12.0
 	github.com/k8gb-io/go-weight-shuffling v0.4.0
 	github.com/maxmind/mmdbwriter v1.0.0
 	github.com/miekg/dns v1.1.62
 	github.com/oschwald/maxminddb-golang v1.13.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	go.uber.org/mock v0.5.0
 	k8s.io/api v0.31.3
 	k8s.io/apimachinery v0.31.3
@@ -198,5 +198,5 @@ replace github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
 
 exclude (
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
-	go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489
+	go.etcd.io/etcd v2.3.8+incompatible
 )
