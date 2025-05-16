@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/AbsaOSS/k8s_crd/common/mocks"
+	"github.com/k8gb-io/coredns-crd-plugin/common/mocks"
 
 	"github.com/coredns/coredns/plugin"
 	dns "github.com/miekg/dns"

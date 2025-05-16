@@ -32,7 +32,7 @@ import (
 	reflect "reflect"
 
 	dns "github.com/miekg/dns"
-	"go.uber.org/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockResponseWriter is a mock of ResponseWriter interface.

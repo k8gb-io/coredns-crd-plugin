@@ -23,9 +23,9 @@ import (
 	"net"
 	"os"
 
-	"github.com/AbsaOSS/k8s_crd/common/k8sctrl"
+	"github.com/k8gb-io/coredns-crd-plugin/common/k8sctrl"
 
-	"github.com/AbsaOSS/k8s_crd/common/netutils"
+	"github.com/k8gb-io/coredns-crd-plugin/common/netutils"
 
 	"github.com/coredns/coredns/plugin"
 	clog "github.com/coredns/coredns/plugin/pkg/log"

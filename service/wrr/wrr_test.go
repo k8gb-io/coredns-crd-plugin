@@ -24,12 +24,12 @@ import (
 	"net"
 	"testing"
 
-	"github.com/AbsaOSS/k8s_crd/common/netutils"
+	"github.com/k8gb-io/coredns-crd-plugin/common/netutils"
 
-	"github.com/AbsaOSS/k8s_crd/common/k8sctrl"
+	"github.com/k8gb-io/coredns-crd-plugin/common/k8sctrl"
 
-	"github.com/AbsaOSS/k8s_crd/common/mocks"
 	"github.com/coredns/coredns/plugin/test"
+	"github.com/k8gb-io/coredns-crd-plugin/common/mocks"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"

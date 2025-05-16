@@ -23,8 +23,8 @@ import (
 
 	restclient "k8s.io/client-go/rest"
 
-	"github.com/AbsaOSS/k8s_crd/common/k8sctrl"
-	dnsendpoint "github.com/AbsaOSS/k8s_crd/extdns"
+	"github.com/k8gb-io/coredns-crd-plugin/common/k8sctrl"
+	dnsendpoint "github.com/k8gb-io/coredns-crd-plugin/extdns"
 
 	"k8s.io/client-go/kubernetes/scheme"
 )

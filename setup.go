@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/AbsaOSS/k8s_crd/service/gateway"
-	"github.com/AbsaOSS/k8s_crd/service/wrr"
+	"github.com/k8gb-io/coredns-crd-plugin/service/gateway"
+	"github.com/k8gb-io/coredns-crd-plugin/service/wrr"
 
 	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
