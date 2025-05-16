@@ -25,12 +25,12 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/AbsaOSS/k8s_crd/common/mocks"
+	"github.com/k8gb-io/coredns-crd-plugin/common/mocks"
 	"go.uber.org/mock/gomock"
 
 	"sigs.k8s.io/external-dns/endpoint"
 
-	dnsendpoint "github.com/AbsaOSS/k8s_crd/extdns"
+	dnsendpoint "github.com/k8gb-io/coredns-crd-plugin/extdns"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/rest"
 )

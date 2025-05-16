@@ -25,8 +25,8 @@ import (
 
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	dnsendpoint "github.com/AbsaOSS/k8s_crd/extdns"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
+	dnsendpoint "github.com/k8gb-io/coredns-crd-plugin/extdns"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"

@@ -22,10 +22,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/AbsaOSS/k8s_crd/common/k8sctrl"
+	"github.com/k8gb-io/coredns-crd-plugin/common/k8sctrl"
 
-	"github.com/AbsaOSS/k8s_crd/service"
 	"github.com/coredns/coredns/plugin"
+	"github.com/k8gb-io/coredns-crd-plugin/service"
 	"github.com/miekg/dns"
 )
 
