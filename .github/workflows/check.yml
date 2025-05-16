@@ -49,7 +49,7 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@9fae48acfc02a90574d7c304a1758ef9895495fa # v7.0.1
         with:
-          version: v2.0.2
+          version: v2.1.6
           args: --timeout=3m30s
       - name: go test
         run: go test ./...
