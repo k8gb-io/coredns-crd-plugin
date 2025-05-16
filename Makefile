@@ -25,8 +25,6 @@ TAG ?= latest
 # Image URL to use all building/pushing image targets
 IMG ?= $(REGISTRY)/$(BIN)
 
-GOLINT_VERSION ?= v1.62.2
-
 # create GOBIN if not specified
 ifndef GOBIN
 GOBIN=$(shell go env GOPATH)/bin
@@ -52,8 +50,7 @@ endif
 # run glonag-ci
 .PHONY: lint
 lint:
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLINT_VERSION)
-	$(GOBIN)/golangci-lint run
+	golangci-lint run -v
 
 build:
 	GOOS=linux CGO_ENABLED=0 go build cmd/coredns.go
