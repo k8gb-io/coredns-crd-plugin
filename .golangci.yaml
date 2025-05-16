@@ -1,25 +1,34 @@
-run:
-  timeout: 120s
-
+version: "2"
 output:
   formats:
-  - format: colored-line-number
-
+    text:
+      path: stdout
 linters:
-  disable-all: true
+  default: none
   enable:
-  - gocyclo
-  - unconvert
-  - goimports
-  - unused
-  - misspell
-  - nakedret
-  - errcheck
-  - ineffassign
-  - goconst
-  - govet
-  - unparam
-  - gofmt
-
-issues:
-  exclude-use-default: false
+    - errcheck
+    - goconst
+    - gocyclo
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - unconvert
+    - unparam
+    - unused
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
