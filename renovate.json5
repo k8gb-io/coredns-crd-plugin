@@ -1,0 +1,24 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:base"],
+  "labels": ["dependencies", "renovate"],
+  "prConcurrentLimit": 15, 
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["*"],
+      "matchUpdateTypes": ["minor","patch"],
+      "matchCurrentVersion": "!/^v?0/",
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch"
+    },
+    {
+      "matchPackageNames": ["github.com/coredns/caddy"],
+      "allowedVersions": "!/^v?2/",
+      "enabled": false
+    },
+    {
+      "matchDepTypes": ["action"],
+      "pinDigests": true
+    }
+  ]
+}
