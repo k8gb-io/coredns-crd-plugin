@@ -37,8 +37,6 @@ const thisPlugin = "gateway"
 
 var log = clog.NewWithPlugin(thisPlugin)
 
-const defaultSvc = "external-dns.kube-system"
-
 // Gateway stores all runtime configuration of a plugin
 type Gateway struct {
 	opts Opts
