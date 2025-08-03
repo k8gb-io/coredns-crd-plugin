@@ -1,6 +1,6 @@
 module github.com/k8gb-io/coredns-crd-plugin
 
-go 1.24.2
+go 1.24.5
 
 require (
 	github.com/coredns/caddy v1.1.2-0.20241029205200-8de985351a98
@@ -91,6 +91,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
+	github.com/golangci/golangci-lint v1.64.8 // indirect
 	github.com/google/gnostic-models v0.6.9 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
@@ -134,7 +135,7 @@ require (
 	github.com/quic-go/quic-go v0.51.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.9.0 // indirect
-	github.com/shirou/gopsutil/v4 v4.25.1 // indirect
+	github.com/shirou/gopsutil/v4 v4.25.2 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/tinylib/msgp v1.2.5 // indirect
