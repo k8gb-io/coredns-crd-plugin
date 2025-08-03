@@ -152,7 +152,6 @@ func (ctrl *KubeController) getEndpointsByCaseInsensitiveName(host string, clien
 	extractLocalEndpoints := func(ep *endpoint.DNSEndpoint, ip net.IP, host string, geoDataFieldPath ...string) (result []LocalDNSEndpoint) {
 		result = []LocalDNSEndpoint{}
 		for _, e := range ep.Spec.Endpoints {
-			log.Infof("Checking endpoint %s against %s", e.DNSName, host)
 			if strings.EqualFold(e.DNSName, host) {
 				r := LocalDNSEndpoint{}
 				r.DNSName = e.DNSName

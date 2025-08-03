@@ -33,7 +33,6 @@ import (
 
 // serveApex serves request that hit the zone' apex. A reply is written back to the client.
 func (gw *Gateway) serveApex(state request.Request) int {
-	log.Infof("Serving apex for %s", state.Zone)
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
 	switch state.QType() {
@@ -61,18 +60,15 @@ func (gw *Gateway) serveApex(state request.Request) int {
 
 		// get the glue records
 		for _, glueName := range glueNames {
-			log.Infof("looking up glue records for %s", glueName)
 			indexKey := netutils.StripClosingDot(glueName)
 			ep := k8sctrl.Resources.DNSEndpoint.Lookup(indexKey, net.ParseIP(state.IP()), "")
 
 			for _, target := range ep.Targets {
-				log.Infof("adding glue record %s for %s", target, indexKey)
 				header := dns.RR_Header{Name: glueName, Rrtype: dns.TypeA, Ttl: gw.opts.ttlHigh, Class: dns.ClassINET}
 				rr := &dns.A{Hdr: header, A: net.ParseIP(target)}
 				m.Extra = append(m.Extra, rr)
 			}
 		}
-		log.Info("got glue records")
 	}
 
 	if err := state.W.WriteMsg(m); err != nil {
