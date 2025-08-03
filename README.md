@@ -115,7 +115,3 @@ go build cmd/coredns.go
 ```
 
 For more details refer to [this CoreDNS doc](https://coredns.io/2017/07/25/compile-time-enabling-or-disabling-plugins/)
-
-## Notes regarding Zone Apex and NS server resolution
-
-Due to the fact that there is not nice way to discover NS server's own IP to respond to A queries, as a workaround, it's possible to pass the name of the LoadBalancer service used to expose the CoreDNS instance as an environment variable `EXTERNAL_SVC`. If not set, the default fallback value of `external-dns.kube-system` will be used to look up the external IP of the CoreDNS service.

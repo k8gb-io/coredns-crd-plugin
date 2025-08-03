@@ -24,6 +24,7 @@ type Opts struct {
 	annotation      string
 	apex            string
 	hostmaster      string
+	hostname        string
 	ttlLow          uint32
 	ttlHigh         uint32
 	zones           []string
@@ -35,14 +36,16 @@ var (
 	ttlLowDefault          = uint32(60)
 	ttlHighDefault         = uint32(3600)
 	defaultApex            = "dns"
+	defaultHostname        = "ns1"
 	defaultHostmaster      = "hostmaster"
 	defaultGeoDataFilePath = "/geoip.mmdb"
 	defaultGeoDataField    = "datacenter"
 )
 
-func NewGatewayOpts(annotation, apex, geoDataFilePath, geoDataField string, ttlLow, ttlHigh uint32, zones []string) Opts {
+func NewGatewayOpts(annotation, apex, hostname, geoDataFilePath, geoDataField string, ttlLow, ttlHigh uint32, zones []string) Opts {
 	opts := Opts{
 		apex:            defaultApex,
+		hostname:        defaultHostname,
 		ttlLow:          ttlLowDefault,
 		ttlHigh:         ttlHighDefault,
 		hostmaster:      defaultHostmaster,
@@ -51,6 +54,9 @@ func NewGatewayOpts(annotation, apex, geoDataFilePath, geoDataField string, ttlL
 	}
 	if apex != "" {
 		opts.apex = apex
+	}
+	if hostname != "" {
+		opts.hostname = hostname
 	}
 	if ttlLow != 0 {
 		opts.ttlLow = ttlLow

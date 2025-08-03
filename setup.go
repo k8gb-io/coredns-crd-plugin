@@ -35,6 +35,7 @@ type args struct {
 	annotation      string
 	apex            string
 	filters         []string
+	hostname        string
 	kubecontroller  string
 	loadbalance     string
 	negttl          uint32
@@ -64,7 +65,7 @@ func setup(c *caddy.Controller) error {
 	if err != nil {
 		return plugin.Error(thisPlugin, err)
 	}
-	gwopts := gateway.NewGatewayOpts(rawArgs.annotation, rawArgs.apex, rawArgs.geoDataFilePath, rawArgs.geoDataField, rawArgs.ttl, rawArgs.negttl, rawArgs.zones)
+	gwopts := gateway.NewGatewayOpts(rawArgs.annotation, rawArgs.apex, rawArgs.hostname, rawArgs.geoDataFilePath, rawArgs.geoDataField, rawArgs.ttl, rawArgs.negttl, rawArgs.zones)
 	_ = k8sCRD.container.Register(gateway.NewGateway(gwopts))
 	if rawArgs.loadbalance == weightRoundRobin {
 		_ = k8sCRD.container.Register(wrr.NewWeightRoundRobin())
@@ -119,6 +120,8 @@ func parse(c *caddy.Controller) (args, error) {
 				}
 			case "apex":
 				a.apex = args[0]
+			case "hostname":
+				a.hostname = args[0]
 			case "kubecontroller":
 				log.Infof("kubecontroller: %+v", args)
 				a.kubecontroller = args[0]
