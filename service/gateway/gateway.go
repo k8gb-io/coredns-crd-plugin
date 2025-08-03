@@ -81,14 +81,10 @@ func (gw *Gateway) ServeDNS(_ context.Context, w dns.ResponseWriter, r *dns.Msg)
 	log.Infof("Computed Index Keys %v", indexKey)
 
 	for _, z := range gw.opts.zones {
+		log.Infof("Checking zone %s against %s", z, state.Name())
 		if state.Name() == z { // apex query
 			ret := gw.serveApex(state)
 			return ret, nil
-		}
-		if state.Name() == gw.opts.hostname+"."+z {
-			// dns subdomain test for ns. and dns. queries
-			gw.serveSubApex(state)
-			return 0, nil
 		}
 	}
 
