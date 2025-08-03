@@ -20,14 +20,27 @@ spec:
 apiVersion: externaldns.k8s.io/v1alpha1
 kind: DNSEndpoint
 metadata:
-  name: black-list 
+  name: coredns-test-extdns
+  labels:
+    k8gb.absa.oss/dnstype: extdns
 spec:
   endpoints:
   - dnsName: host3.example.org 
     recordType: A
     targets:
-    - 1.2.3.4 
+    - 4.3.2.1
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: black-list 
+spec:
+  endpoints:
   - dnsName: host4.example.org 
+    recordType: A
+    targets:
+    - 1.2.3.4 
+  - dnsName: host5.example.org 
     recordType: A
     targets:
     - 4.3.2.1 

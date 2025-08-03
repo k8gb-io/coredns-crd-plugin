@@ -30,4 +30,5 @@ coredns:
       configBlock: |-
         apex dns1
         filter k8gb.absa.oss/dnstype=local
+        filter k8gb.absa.oss/dnstype=extdns
         loadbalance weight

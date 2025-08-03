@@ -130,7 +130,7 @@ func TestKubeController(t *testing.T) {
 
 	var k8sctrl *KubeController
 	t.Run("initialize", func(t *testing.T) {
-		k8sctrl = NewKubeController(context.TODO(), client, label)
+		k8sctrl = NewKubeController(context.TODO(), client, []string{label})
 		assert.NotNil(t, k8sctrl)
 		assert.False(t, k8sctrl.HasSynced())
 		assert.Equal(t, 1, len(k8sctrl.controllers))

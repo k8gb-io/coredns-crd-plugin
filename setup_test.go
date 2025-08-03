@@ -34,7 +34,7 @@ func TestParseArguments(t *testing.T) {
 		args          args
 	}{
 		{
-			"valid args",
+			"valid args - single filter",
 			`
 						k8s_crd {
 							filter k8gb.absa.oss/dnstype=local
@@ -45,7 +45,23 @@ func TestParseArguments(t *testing.T) {
 							annotation xy
 						}`,
 			false,
-			args{filter: "k8gb.absa.oss/dnstype=local", negttl: 300, kubecontroller: "local", loadbalance: weightRoundRobin,
+			args{filters: []string{"k8gb.absa.oss/dnstype=local"}, negttl: 300, kubecontroller: "local", loadbalance: weightRoundRobin,
+				zones: []string{}, apex: "xy", annotation: "xy"},
+		},
+		{
+			"valid args - multiple filters",
+			`
+						k8s_crd {
+							filter k8gb.absa.oss/dnstype=local
+							filter k8gb.absa.oss/dnstype=extdns
+							negttl 300
+							kubecontroller local
+							loadbalance weight
+							apex xy
+							annotation xy
+						}`,
+			false,
+			args{filters: []string{"k8gb.absa.oss/dnstype=local", "k8gb.absa.oss/dnstype=extdns"}, negttl: 300, kubecontroller: "local", loadbalance: weightRoundRobin,
 				zones: []string{}, apex: "xy", annotation: "xy"},
 		},
 		{
