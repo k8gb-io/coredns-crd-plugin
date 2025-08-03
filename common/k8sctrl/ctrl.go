@@ -35,10 +35,10 @@ import (
 )
 
 type KubeController struct {
-	client      dnsendpoint.ExtDNSInterface
-	controllers []cache.SharedIndexInformer
-	hasSynced   bool
-	epc         cache.SharedIndexInformer
+	client              dnsendpoint.ExtDNSInterface
+	controllers         []cache.SharedIndexInformer
+	hasSynced           bool
+	endpointControllers []cache.SharedIndexInformer
 }
 
 type LookupEndpoint func(indexKey string, clientIP net.IP, geoDataFilePath string, geoDataFieldPath ...string) (result LocalDNSEndpoint)
@@ -77,7 +77,7 @@ func NewKubeController(ctx context.Context, c *dnsendpoint.ExtDNSClient, labels 
 			defaultResyncPeriod,
 			cache.Indexers{endpointHostnameIndex: endpointHostnameIndexFunc},
 		)
-		ctrl.epc = endpointController
+		ctrl.endpointControllers = append(ctrl.endpointControllers, endpointController)
 		Resources.DNSEndpoint.Lookup = ctrl.getEndpointByName
 		ctrl.controllers = append(ctrl.controllers, endpointController)
 	}
@@ -170,7 +170,10 @@ func (ctrl *KubeController) getEndpointsByCaseInsensitiveName(host string, clien
 		return result
 	}
 
-	epList := ctrl.epc.GetIndexer().List()
+	var epList []interface{}
+	for _, endpointController := range ctrl.endpointControllers {
+		epList = append(epList, endpointController.GetIndexer().List()...)
+	}
 	result = make(map[string]LocalDNSEndpoint, 0)
 	for _, obj := range epList {
 		ep := obj.(*v1alpha1.DNSEndpoint)
