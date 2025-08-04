@@ -28,6 +28,7 @@ import (
 	"github.com/k8gb-io/coredns-crd-plugin/common/mocks"
 	"go.uber.org/mock/gomock"
 
+	"sigs.k8s.io/external-dns/apis/v1alpha1"
 	"sigs.k8s.io/external-dns/endpoint"
 
 	dnsendpoint "github.com/k8gb-io/coredns-crd-plugin/extdns"
@@ -43,8 +44,8 @@ func TestKubeController(t *testing.T) {
 	const embeddedCaseSensitive = "embedded.CLOUD.EXAMPLE.COM"
 	const embeddedCaseInsensitive = "embedded.cloud.example.com"
 	var clientIP = []byte{0x0A, 0x0A, 0x0A, 0x01}
-	defaultEP := &endpoint.DNSEndpoint{
-		Spec: endpoint.DNSEndpointSpec{
+	defaultEP := &v1alpha1.DNSEndpoint{
+		Spec: v1alpha1.DNSEndpointSpec{
 			Endpoints: []*endpoint.Endpoint{
 				{
 					DNSName: "localtargets-" + host,
@@ -68,8 +69,8 @@ func TestKubeController(t *testing.T) {
 		},
 	}
 
-	ep1 := &endpoint.DNSEndpoint{
-		Spec: endpoint.DNSEndpointSpec{
+	ep1 := &v1alpha1.DNSEndpoint{
+		Spec: v1alpha1.DNSEndpointSpec{
 			Endpoints: []*endpoint.Endpoint{
 				{
 					DNSName: "localtargets-" + hOSTCaseInsensitive,
@@ -83,8 +84,8 @@ func TestKubeController(t *testing.T) {
 		},
 	}
 
-	ep2 := &endpoint.DNSEndpoint{
-		Spec: endpoint.DNSEndpointSpec{
+	ep2 := &v1alpha1.DNSEndpoint{
+		Spec: v1alpha1.DNSEndpointSpec{
 			Endpoints: []*endpoint.Endpoint{
 				{
 					DNSName: "localtargets-" + hOSTCaseInsensitive,
@@ -98,8 +99,8 @@ func TestKubeController(t *testing.T) {
 		},
 	}
 
-	epEmbedded := &endpoint.DNSEndpoint{
-		Spec: endpoint.DNSEndpointSpec{
+	epEmbedded := &v1alpha1.DNSEndpoint{
+		Spec: v1alpha1.DNSEndpointSpec{
 			Endpoints: []*endpoint.Endpoint{
 				{
 					DNSName: "localtargets-" + embeddedCaseSensitive,
