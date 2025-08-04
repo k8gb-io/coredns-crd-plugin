@@ -31,7 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
-	"sigs.k8s.io/external-dns/endpoint"
+	"sigs.k8s.io/external-dns/apis/v1alpha1"
 )
 
 type KubeController struct {
@@ -74,7 +74,7 @@ func NewKubeController(ctx context.Context, c *dnsendpoint.ExtDNSClient, label s
 			ListFunc:  endpointLister(ctx, ctrl.client, core.NamespaceAll, ctrl.labelFilter),
 			WatchFunc: endpointWatcher(ctx, ctrl.client, core.NamespaceAll, ctrl.labelFilter),
 		},
-		&endpoint.DNSEndpoint{},
+		&v1alpha1.DNSEndpoint{},
 		defaultResyncPeriod,
 		cache.Indexers{endpointHostnameIndex: endpointHostnameIndexFunc},
 	)
@@ -124,7 +124,7 @@ func endpointWatcher(ctx context.Context, c dnsendpoint.ExtDNSInterface, ns, lab
 }
 
 func endpointHostnameIndexFunc(obj interface{}) ([]string, error) {
-	ep, ok := obj.(*endpoint.DNSEndpoint)
+	ep, ok := obj.(*v1alpha1.DNSEndpoint)
 	if !ok {
 		return []string{}, nil
 	}
@@ -149,7 +149,7 @@ func (ctrl *KubeController) getEndpointsByCaseInsensitiveName(host string, clien
 
 	// The function extracts LocalDNSEndpoints from *DNSEndpoint. The function is hardwired with a case-sensitive extraction scenario and is only used in a
 	// single location, so it is currently declared inside the calling function.
-	extractLocalEndpoints := func(ep *endpoint.DNSEndpoint, ip net.IP, host string, geoDataFieldPath ...string) (result []LocalDNSEndpoint) {
+	extractLocalEndpoints := func(ep *v1alpha1.DNSEndpoint, ip net.IP, host string, geoDataFieldPath ...string) (result []LocalDNSEndpoint) {
 		result = []LocalDNSEndpoint{}
 		for _, e := range ep.Spec.Endpoints {
 			if strings.EqualFold(e.DNSName, host) {
@@ -173,7 +173,7 @@ func (ctrl *KubeController) getEndpointsByCaseInsensitiveName(host string, clien
 	epList := ctrl.epc.GetIndexer().List()
 	result = make(map[string]LocalDNSEndpoint, 0)
 	for _, obj := range epList {
-		ep := obj.(*endpoint.DNSEndpoint)
+		ep := obj.(*v1alpha1.DNSEndpoint)
 		extracts := extractLocalEndpoints(ep, clientIP, host, geoDataFieldPath...)
 		for _, extracted := range extracts {
 			if strings.EqualFold(extracted.DNSName, host) {

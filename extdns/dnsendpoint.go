@@ -27,7 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	"sigs.k8s.io/external-dns/endpoint"
+	"sigs.k8s.io/external-dns/apis/v1alpha1"
 )
 
 const GroupName = "externaldns.k8s.io"
@@ -61,7 +61,7 @@ func (c *ExtDNSClient) DNSEndpoints(namespace string) DNSEndpoint {
 }
 
 type DNSEndpoint interface {
-	List(ctx context.Context, opts metav1.ListOptions) (*endpoint.DNSEndpointList, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1alpha1.DNSEndpointList, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
 }
 
@@ -80,8 +80,8 @@ func NewForConfig(c *rest.Config) (*ExtDNSClient, error) {
 	return &ExtDNSClient{restClient: client}, nil
 }
 
-func (c *dnsendpointClient) List(ctx context.Context, opts metav1.ListOptions) (*endpoint.DNSEndpointList, error) {
-	result := endpoint.DNSEndpointList{}
+func (c *dnsendpointClient) List(ctx context.Context, opts metav1.ListOptions) (*v1alpha1.DNSEndpointList, error) {
+	result := v1alpha1.DNSEndpointList{}
 	err := c.restClient.
 		Get().
 		Namespace(c.ns).
@@ -105,8 +105,8 @@ func (c *dnsendpointClient) Watch(ctx context.Context, opts metav1.ListOptions) 
 
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&endpoint.DNSEndpoint{},
-		&endpoint.DNSEndpointList{},
+		&v1alpha1.DNSEndpoint{},
+		&v1alpha1.DNSEndpointList{},
 	)
 
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
