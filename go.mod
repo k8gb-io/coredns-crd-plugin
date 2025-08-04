@@ -3,18 +3,18 @@ module github.com/k8gb-io/coredns-crd-plugin
 go 1.24.2
 
 require (
-	github.com/coredns/caddy v1.1.2-0.20241029205200-8de985351a98
-	github.com/coredns/coredns v1.12.2-0.20250514114813-17eb2eed3429
+	github.com/coredns/caddy/v2 v2.1.1
+	github.com/coredns/coredns v1.12.2
 	github.com/k8gb-io/go-weight-shuffling v0.4.0
 	github.com/maxmind/mmdbwriter v1.0.0
-	github.com/miekg/dns v1.1.66
+	github.com/miekg/dns v1.1.68
 	github.com/oschwald/maxminddb-golang v1.13.1
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/mock v0.5.2
-	k8s.io/api v0.33.1
-	k8s.io/apimachinery v0.33.1
-	k8s.io/client-go v0.33.1
-	sigs.k8s.io/external-dns v0.17.0
+	k8s.io/api v0.33.3
+	k8s.io/apimachinery v0.33.3
+	k8s.io/client-go v0.33.3
+	sigs.k8s.io/external-dns v0.18.0
 )
 
 require (
