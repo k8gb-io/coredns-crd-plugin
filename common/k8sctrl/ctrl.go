@@ -35,11 +35,10 @@ import (
 )
 
 type KubeController struct {
-	client      dnsendpoint.ExtDNSInterface
-	controllers []cache.SharedIndexInformer
-	labelFilter string
-	hasSynced   bool
-	epc         cache.SharedIndexInformer
+	client              dnsendpoint.ExtDNSInterface
+	controllers         []cache.SharedIndexInformer
+	hasSynced           bool
+	endpointControllers []cache.SharedIndexInformer
 }
 
 type LookupEndpoint func(indexKey string, clientIP net.IP, geoDataFilePath string, geoDataFieldPath ...string) (result LocalDNSEndpoint)
@@ -64,23 +63,24 @@ var Resources = struct {
 	},
 }
 
-func NewKubeController(ctx context.Context, c *dnsendpoint.ExtDNSClient, label string) *KubeController {
+func NewKubeController(ctx context.Context, c *dnsendpoint.ExtDNSClient, labels []string) *KubeController {
 	ctrl := &KubeController{
-		client:      c,
-		labelFilter: label,
+		client: c,
 	}
-	endpointController := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc:  endpointLister(ctx, ctrl.client, core.NamespaceAll, ctrl.labelFilter),
-			WatchFunc: endpointWatcher(ctx, ctrl.client, core.NamespaceAll, ctrl.labelFilter),
-		},
-		&v1alpha1.DNSEndpoint{},
-		defaultResyncPeriod,
-		cache.Indexers{endpointHostnameIndex: endpointHostnameIndexFunc},
-	)
-	ctrl.epc = endpointController
-	Resources.DNSEndpoint.Lookup = ctrl.getEndpointByName
-	ctrl.controllers = append(ctrl.controllers, endpointController)
+	for _, label := range labels {
+		endpointController := cache.NewSharedIndexInformer(
+			&cache.ListWatch{
+				ListFunc:  endpointLister(ctx, ctrl.client, core.NamespaceAll, label),
+				WatchFunc: endpointWatcher(ctx, ctrl.client, core.NamespaceAll, label),
+			},
+			&v1alpha1.DNSEndpoint{},
+			defaultResyncPeriod,
+			cache.Indexers{endpointHostnameIndex: endpointHostnameIndexFunc},
+		)
+		ctrl.endpointControllers = append(ctrl.endpointControllers, endpointController)
+		Resources.DNSEndpoint.Lookup = ctrl.getEndpointByName
+		ctrl.controllers = append(ctrl.controllers, endpointController)
+	}
 	return ctrl
 }
 
@@ -109,7 +109,7 @@ func (ctrl *KubeController) HasSynced() bool {
 	return ctrl.hasSynced
 }
 
-func endpointLister(ctx context.Context, c dnsendpoint.ExtDNSInterface, ns, label string) func(meta.ListOptions) (runtime.Object, error) {
+func endpointLister(ctx context.Context, c dnsendpoint.ExtDNSInterface, ns string, label string) func(meta.ListOptions) (runtime.Object, error) {
 	return func(opts meta.ListOptions) (runtime.Object, error) {
 		opts.LabelSelector = label
 		return c.DNSEndpoints(ns).List(ctx, opts)
@@ -170,7 +170,10 @@ func (ctrl *KubeController) getEndpointsByCaseInsensitiveName(host string, clien
 		return result
 	}
 
-	epList := ctrl.epc.GetIndexer().List()
+	var epList []interface{}
+	for _, endpointController := range ctrl.endpointControllers {
+		epList = append(epList, endpointController.GetIndexer().List()...)
+	}
 	result = make(map[string]LocalDNSEndpoint, 0)
 	for _, obj := range epList {
 		ep := obj.(*v1alpha1.DNSEndpoint)

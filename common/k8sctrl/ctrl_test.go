@@ -34,6 +34,7 @@ import (
 	dnsendpoint "github.com/k8gb-io/coredns-crd-plugin/extdns"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 )
 
 func TestKubeController(t *testing.T) {
@@ -131,13 +132,13 @@ func TestKubeController(t *testing.T) {
 
 	var k8sctrl *KubeController
 	t.Run("initialize", func(t *testing.T) {
-		k8sctrl = NewKubeController(context.TODO(), client, label)
+		k8sctrl = NewKubeController(context.TODO(), client, []string{label})
 		assert.NotNil(t, k8sctrl)
 		assert.False(t, k8sctrl.HasSynced())
 		assert.Equal(t, 1, len(k8sctrl.controllers))
 	})
 
-	k8sctrl.epc = mcache
+	k8sctrl.endpointControllers = []cache.SharedIndexInformer{mcache}
 
 	t.Run("get no-geo endpoint by name", func(t *testing.T) {
 		lep := k8sctrl.getEndpointByName(host, clientIP, "")

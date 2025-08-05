@@ -34,7 +34,7 @@ import (
 type args struct {
 	annotation      string
 	apex            string
-	filter          string
+	filters         []string
 	kubecontroller  string
 	loadbalance     string
 	negttl          uint32
@@ -60,7 +60,7 @@ func setup(c *caddy.Controller) error {
 		return plugin.Error(thisPlugin, err)
 	}
 
-	k8sCRD, err := NewK8sCRD(configType(rawArgs.kubecontroller), rawArgs.filter)
+	k8sCRD, err := NewK8sCRD(configType(rawArgs.kubecontroller), rawArgs.filters)
 	if err != nil {
 		return plugin.Error(thisPlugin, err)
 	}
@@ -102,7 +102,7 @@ func parse(c *caddy.Controller) (args, error) {
 			switch key {
 			case "filter":
 				log.Infof("Filter: %+v", args)
-				a.filter = args[0]
+				a.filters = append(a.filters, args[0])
 			case "annotation":
 				log.Infof("annotation: %+v", args)
 				a.annotation = args[0]

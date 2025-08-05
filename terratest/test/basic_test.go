@@ -76,15 +76,23 @@ func TestBasicExample(t *testing.T) {
 		k8s.WaitUntilPodAvailable(t, mainNsOptions, pod.Name, 60, 1*time.Second)
 	}
 
-	t.Run("Basic type A resolve", func(t *testing.T) {
+	// check for reply on local label
+	t.Run("Basic type A resolve on local label", func(t *testing.T) {
 		actualIP, err := DigIPs(t, "localhost", 1053, "host1.example.org", dns.TypeA, clientIP)
 		require.NoError(t, err)
 		assert.Contains(t, actualIP, "1.2.3.4")
 	})
 
-	// check for NODATA replay on non labeled endpoints
-	t.Run("NODATA reply on non labeled endpoints", func(t *testing.T) {
+	// check for reply on extdns label
+	t.Run("Basic type A resolve on extdns label", func(t *testing.T) {
 		emptyIP, err := DigIPs(t, "localhost", 1053, "host3.example.org", dns.TypeA, clientIP)
+		require.NoError(t, err)
+		assert.Contains(t, emptyIP, "4.3.2.1")
+	})
+
+	// check for NODATA reply on non labeled endpoints
+	t.Run("NODATA reply on non labeled endpoints", func(t *testing.T) {
+		emptyIP, err := DigIPs(t, "localhost", 1053, "host4.example.org", dns.TypeA, clientIP)
 		require.NoError(t, err)
 		assert.NotContains(t, emptyIP, "1.2.3.4")
 	})

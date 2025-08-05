@@ -30,7 +30,7 @@ import (
 )
 
 // RunKubeController kicks off the k8s controllers
-func RunKubeController(ctx context.Context, cfg *restclient.Config, filter string) (*k8sctrl.KubeController, error) {
+func RunKubeController(ctx context.Context, cfg *restclient.Config, filters []string) (*k8sctrl.KubeController, error) {
 
 	err := dnsendpoint.AddToScheme(scheme.Scheme)
 	if err != nil {
@@ -42,7 +42,7 @@ func RunKubeController(ctx context.Context, cfg *restclient.Config, filter strin
 		return nil, err
 	}
 
-	ctrl := k8sctrl.NewKubeController(ctx, kubeClient, filter)
+	ctrl := k8sctrl.NewKubeController(ctx, kubeClient, filters)
 
 	go ctrl.Run()
 
