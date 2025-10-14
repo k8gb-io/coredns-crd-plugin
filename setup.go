@@ -41,7 +41,8 @@ type args struct {
 	ttl             uint32
 	zones           []string
 	geoDataFilePath string
-	geoDataField    string
+	geoDataField    string // Deprecated: use geoDataFields
+	geoDataFields   []string
 }
 
 const thisPlugin = "k8s_crd"
@@ -64,7 +65,14 @@ func setup(c *caddy.Controller) error {
 	if err != nil {
 		return plugin.Error(thisPlugin, err)
 	}
-	gwopts := gateway.NewGatewayOpts(rawArgs.annotation, rawArgs.apex, rawArgs.geoDataFilePath, rawArgs.geoDataField, rawArgs.ttl, rawArgs.negttl, rawArgs.zones)
+	// Determine which geo fields to use (prefer new plural form, fall back to singular for backward compatibility)
+	var geoFields []string
+	if len(rawArgs.geoDataFields) > 0 {
+		geoFields = rawArgs.geoDataFields
+	} else if rawArgs.geoDataField != "" {
+		geoFields = []string{rawArgs.geoDataField}
+	}
+	gwopts := gateway.NewGatewayOpts(rawArgs.annotation, rawArgs.apex, rawArgs.geoDataFilePath, geoFields, rawArgs.ttl, rawArgs.negttl, rawArgs.zones)
 	_ = k8sCRD.container.Register(gateway.NewGateway(gwopts))
 	if rawArgs.loadbalance == weightRoundRobin {
 		_ = k8sCRD.container.Register(wrr.NewWeightRoundRobin())
@@ -131,6 +139,9 @@ func parse(c *caddy.Controller) (args, error) {
 			case "geodatafield":
 				log.Infof("geodatafield: %+v", args)
 				a.geoDataField = args[0]
+			case "geodatafields":
+				log.Infof("geodatafields: %+v", args)
+				a.geoDataFields = args
 			default:
 				return a, c.Errf("Unknown property '%s'", c.Val())
 			}

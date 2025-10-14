@@ -40,7 +40,7 @@ func (lep LocalDNSEndpoint) String() string {
 	return fmt.Sprintf("%s: %v, Targets: %v, Labels: %v", lep.DNSName, lep.TTL, lep.Targets, lep.Labels)
 }
 
-func (lep LocalDNSEndpoint) extractGeo(endpoint *endpoint.Endpoint, clientIP net.IP, geoDataFilePath string, geoDataFieldPath ...string) (result []string) {
+func (lep LocalDNSEndpoint) extractGeo(endpoint *endpoint.Endpoint, clientIP net.IP, geoDataFilePath string, geoDataFieldPaths [][]string) (result []string) {
 	if geoDataFilePath == "" {
 		return nil
 	}
@@ -59,47 +59,61 @@ func (lep LocalDNSEndpoint) extractGeo(endpoint *endpoint.Endpoint, clientIP net
 
 	log.Infof("extracted client geo data: %+v", clientGeo)
 
-	if len(geoDataFieldPath) == 0 {
+	if len(geoDataFieldPaths) == 0 {
 		log.Info("no geo data field specified")
 		return result
 	}
 
-	clientGeoData, found, err := unstructured.NestedString(clientGeo, geoDataFieldPath...)
-	if err != nil {
-		log.Infof("error retrieving client geo data for field %+v: %v", geoDataFieldPath, err)
-		return result
-	}
+	for _, geoDataFieldPath := range geoDataFieldPaths {
+		log.Infof("trying geo field path: %+v", geoDataFieldPath)
 
-	if !found || clientGeoData == "" {
-		log.Infof("client geo data field %+v not found", geoDataFieldPath)
-		return result
-	}
-
-	log.Infof("client geo data field value for %+v: %+v", geoDataFieldPath, clientGeoData)
-
-	for _, ip := range endpoint.Targets {
-		var endpointGeo geo
-		log.Infof("processing IP %+v", ip)
-		err = db.Lookup(net.ParseIP(ip), &endpointGeo)
+		clientGeoData, found, err := unstructured.NestedString(clientGeo, geoDataFieldPath...)
 		if err != nil {
-			log.Error(err)
+			log.Infof("error retrieving client geo data for field %+v: %v", geoDataFieldPath, err)
 			continue
 		}
-		endpointGeoData, found, err := unstructured.NestedString(endpointGeo, geoDataFieldPath...)
-		if err != nil {
-			log.Infof("error retrieving endpoint geo data for field %+v: %v", geoDataFieldPath, err)
-			return result
+
+		if !found || clientGeoData == "" {
+			log.Infof("client geo data field %+v not found", geoDataFieldPath)
+			continue
 		}
 
-		if !found || endpointGeoData == "" {
-			log.Infof("endpoint geo data field %+v not found", geoDataFieldPath)
-			return result
+		log.Infof("client geo data field value for %+v: %+v", geoDataFieldPath, clientGeoData)
+
+		var matches []string
+		for _, ip := range endpoint.Targets {
+			var endpointGeo geo
+			log.Infof("processing IP %+v", ip)
+			err = db.Lookup(net.ParseIP(ip), &endpointGeo)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			endpointGeoData, found, err := unstructured.NestedString(endpointGeo, geoDataFieldPath...)
+			if err != nil {
+				log.Infof("error retrieving endpoint geo data for field %+v: %v", geoDataFieldPath, err)
+				continue
+			}
+
+			if !found || endpointGeoData == "" {
+				log.Infof("endpoint geo data field %+v not found for IP %s", geoDataFieldPath, ip)
+				continue
+			}
+
+			log.Infof("endpoint data field value for %+v: %+v", geoDataFieldPath, endpointGeoData)
+			if clientGeoData == endpointGeoData {
+				matches = append(matches, ip)
+			}
 		}
 
-		log.Infof("endpoint data field value for %+v: %+v", geoDataFieldPath, clientGeoData)
-		if clientGeoData == endpointGeoData {
-			result = append(result, ip)
+		if len(matches) > 0 {
+			log.Infof("found %d matches for field path %+v", len(matches), geoDataFieldPath)
+			return matches
 		}
+
+		log.Infof("no matches found for field path %+v, trying next field", geoDataFieldPath)
 	}
+
+	log.Info("no matches found for any geo field path")
 	return result
 }
