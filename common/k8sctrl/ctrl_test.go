@@ -141,30 +141,30 @@ func TestKubeController(t *testing.T) {
 	k8sctrl.endpointControllers = []cache.SharedIndexInformer{mcache}
 
 	t.Run("get no-geo endpoint by name", func(t *testing.T) {
-		lep := k8sctrl.getEndpointByName(host, clientIP, "")
+		lep := k8sctrl.getEndpointByName(host, clientIP, "", nil)
 		assert.NotNil(t, lep)
 		assert.Equal(t, "roundrobin.cloud.example.com: 0, Targets: [10.0.0.1 10.0.0.2], Labels: map[strategy:roundrobin]", lep.String())
 	})
 
 	t.Run("valid uppercase domain query", func(t *testing.T) {
-		lep := k8sctrl.getEndpointByName(hOSTCaseInsensitive, clientIP, "")
+		lep := k8sctrl.getEndpointByName(hOSTCaseInsensitive, clientIP, "", nil)
 		assert.NotNil(t, lep)
 		sort.Strings(lep.Targets)
 		assert.Equal(t, "roundrobin-case-insensitive.CLOUD.EXAMPLE.COM: 0, Targets: [1.1.1.1 1.1.1.2 2.2.2.2], Labels: map[strategy:roundrobin]", lep.String())
 
-		lep = k8sctrl.getEndpointByName(hostCaseInsensitive, clientIP, "")
+		lep = k8sctrl.getEndpointByName(hostCaseInsensitive, clientIP, "", nil)
 		assert.NotNil(t, lep)
 		sort.Strings(lep.Targets)
 		assert.Equal(t, "roundrobin-case-insensitive.cloud.example.com: 0, Targets: [1.1.1.1 1.1.1.2 2.2.2.2], Labels: map[strategy:roundrobin]", lep.String())
 	})
 
 	t.Run("handle multiple embedded endpoints", func(t *testing.T) {
-		lep := k8sctrl.getEndpointByName(embeddedCaseInsensitive, clientIP, "")
+		lep := k8sctrl.getEndpointByName(embeddedCaseInsensitive, clientIP, "", nil)
 		assert.NotNil(t, lep)
 		sort.Strings(lep.Targets)
 		assert.Equal(t, "embedded.cloud.example.com: 0, Targets: [10.10.10.2 10.10.10.30 10.10.10.32], Labels: map[strategy:roundrobin]", lep.String())
 
-		lep = k8sctrl.getEndpointByName(embeddedCaseSensitive, clientIP, "")
+		lep = k8sctrl.getEndpointByName(embeddedCaseSensitive, clientIP, "", nil)
 		assert.NotNil(t, lep)
 		sort.Strings(lep.Targets)
 		assert.Equal(t, "embedded.CLOUD.EXAMPLE.COM: 0, Targets: [10.10.10.2 10.10.10.30 10.10.10.32], Labels: map[strategy:roundrobin]", lep.String())
@@ -172,11 +172,11 @@ func TestKubeController(t *testing.T) {
 
 	t.Run("handle multiple embedded endpoints but one EP is empty", func(t *testing.T) {
 		epEmbedded.Spec.Endpoints[1].Targets = []string{}
-		lep := k8sctrl.getEndpointByName(embeddedCaseInsensitive, clientIP, "")
+		lep := k8sctrl.getEndpointByName(embeddedCaseInsensitive, clientIP, "", nil)
 		assert.NotNil(t, lep)
 		assert.Equal(t, "embedded.cloud.example.com: 0, Targets: [10.10.10.2], Labels: map[strategy:roundrobin]", lep.String())
 
-		lep = k8sctrl.getEndpointByName(embeddedCaseSensitive, clientIP, "")
+		lep = k8sctrl.getEndpointByName(embeddedCaseSensitive, clientIP, "", nil)
 		assert.NotNil(t, lep)
 		assert.Equal(t, "embedded.CLOUD.EXAMPLE.COM: 0, Targets: [10.10.10.2], Labels: map[strategy:roundrobin]", lep.String())
 
@@ -186,33 +186,33 @@ func TestKubeController(t *testing.T) {
 		epEmbedded.Spec.Endpoints[1].Targets = []string{}
 		epEmbedded.Spec.Endpoints[2].Targets = []string{}
 		epEmbedded.Spec.Endpoints[0].Targets = []string{}
-		lep := k8sctrl.getEndpointByName(embeddedCaseInsensitive, clientIP, "")
+		lep := k8sctrl.getEndpointByName(embeddedCaseInsensitive, clientIP, "", nil)
 		assert.NotNil(t, lep)
 		assert.Equal(t, "embedded.cloud.example.com: 0, Targets: [], Labels: map[strategy:roundrobin]", lep.String())
 
-		lep = k8sctrl.getEndpointByName(embeddedCaseSensitive, clientIP, "")
+		lep = k8sctrl.getEndpointByName(embeddedCaseSensitive, clientIP, "", nil)
 		assert.NotNil(t, lep)
 		assert.Equal(t, "embedded.CLOUD.EXAMPLE.COM: 0, Targets: [], Labels: map[strategy:roundrobin]", lep.String())
 	})
 
 	t.Run("EP has no dns endpoints", func(t *testing.T) {
 		epEmbedded.Spec.Endpoints = []*endpoint.Endpoint{}
-		lep := k8sctrl.getEndpointByName(embeddedCaseInsensitive, clientIP, "")
+		lep := k8sctrl.getEndpointByName(embeddedCaseInsensitive, clientIP, "", nil)
 		assert.NotNil(t, lep)
 		assert.Equal(t, "embedded.cloud.example.com: 0, Targets: [], Labels: map[]", lep.String())
 
-		lep = k8sctrl.getEndpointByName(embeddedCaseSensitive, clientIP, "")
+		lep = k8sctrl.getEndpointByName(embeddedCaseSensitive, clientIP, "", nil)
 		assert.NotNil(t, lep)
 		assert.Equal(t, "embedded.CLOUD.EXAMPLE.COM: 0, Targets: [], Labels: map[]", lep.String())
 	})
 
 	t.Run("EP has nil dns endpoints", func(t *testing.T) {
 		epEmbedded.Spec.Endpoints = nil
-		lep := k8sctrl.getEndpointByName(embeddedCaseInsensitive, clientIP, "")
+		lep := k8sctrl.getEndpointByName(embeddedCaseInsensitive, clientIP, "", nil)
 		assert.NotNil(t, lep)
 		assert.Equal(t, "embedded.cloud.example.com: 0, Targets: [], Labels: map[]", lep.String())
 
-		lep = k8sctrl.getEndpointByName(embeddedCaseSensitive, clientIP, "")
+		lep = k8sctrl.getEndpointByName(embeddedCaseSensitive, clientIP, "", nil)
 		assert.NotNil(t, lep)
 		assert.Equal(t, "embedded.CLOUD.EXAMPLE.COM: 0, Targets: [], Labels: map[]", lep.String())
 	})

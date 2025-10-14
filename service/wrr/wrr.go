@@ -54,7 +54,7 @@ func (wrr *WeightRoundRobin) ServeDNS(_ context.Context, w dns.ResponseWriter, r
 	state := request.Request{W: w, Req: r}
 	clientIP = netutils.ExtractEdnsSubnet(r)
 	indexKey := netutils.StripClosingDot(state.QName())
-	var ep = k8sctrl.Resources.DNSEndpoint.Lookup(indexKey, clientIP, "")
+	var ep = k8sctrl.Resources.DNSEndpoint.Lookup(indexKey, clientIP, "", nil)
 	// weights are not defined, labels doesnt exists
 	if len(ep.Labels) == 1 && strings.ToUpper(ep.Labels["strategy"]) == "ROUNDROBIN" {
 		roundRobinShuffle(r.Answer)

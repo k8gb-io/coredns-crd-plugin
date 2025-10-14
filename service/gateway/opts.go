@@ -28,7 +28,7 @@ type Opts struct {
 	ttlHigh         uint32
 	zones           []string
 	geoDataFilePath string
-	geoDataField    []string
+	geoDataFields   [][]string
 }
 
 var (
@@ -40,14 +40,14 @@ var (
 	defaultGeoDataField    = "datacenter"
 )
 
-func NewGatewayOpts(annotation, apex, geoDataFilePath, geoDataField string, ttlLow, ttlHigh uint32, zones []string) Opts {
+func NewGatewayOpts(annotation, apex, geoDataFilePath string, geoDataFields []string, ttlLow, ttlHigh uint32, zones []string) Opts {
 	opts := Opts{
 		apex:            defaultApex,
 		ttlLow:          ttlLowDefault,
 		ttlHigh:         ttlHighDefault,
 		hostmaster:      defaultHostmaster,
 		geoDataFilePath: defaultGeoDataFilePath,
-		geoDataField:    strings.Split(defaultGeoDataField, "."),
+		geoDataFields:   [][]string{strings.Split(defaultGeoDataField, ".")},
 	}
 	if apex != "" {
 		opts.apex = apex
@@ -61,8 +61,13 @@ func NewGatewayOpts(annotation, apex, geoDataFilePath, geoDataField string, ttlL
 	if geoDataFilePath != "" {
 		opts.geoDataFilePath = geoDataFilePath
 	}
-	if geoDataField != "" {
-		opts.geoDataField = strings.Split(geoDataField, ".")
+	if len(geoDataFields) > 0 {
+		opts.geoDataFields = make([][]string, 0, len(geoDataFields))
+		for _, field := range geoDataFields {
+			if field != "" {
+				opts.geoDataFields = append(opts.geoDataFields, strings.Split(field, "."))
+			}
+		}
 	}
 	opts.annotation = annotation
 	opts.zones = zones

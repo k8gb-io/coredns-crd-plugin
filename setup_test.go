@@ -104,6 +104,47 @@ func TestParseArguments(t *testing.T) {
 			false,
 			args{zones: []string{}, negttl: 0, ttl: 0},
 		},
+		{
+			"geodatafield - single field (backward compatibility)",
+			`
+						k8s_crd {
+							geodatafilepath /geoip.mmdb
+							geodatafield country.iso_code
+						}`,
+			false,
+			args{zones: []string{}, negttl: 0, ttl: 0, geoDataFilePath: "/geoip.mmdb", geoDataField: "country.iso_code"},
+		},
+		{
+			"geodatafields - multiple fields",
+			`
+						k8s_crd {
+							geodatafilepath /geoip.mmdb
+							geodatafields country.iso_code continent.code
+						}`,
+			false,
+			args{zones: []string{}, negttl: 0, ttl: 0, geoDataFilePath: "/geoip.mmdb", geoDataFields: []string{"country.iso_code", "continent.code"}},
+		},
+		{
+			"geodatafields - three fields with nested paths",
+			`
+						k8s_crd {
+							geodatafilepath /geoip.mmdb
+							geodatafields city.names.en country.iso_code continent.code
+						}`,
+			false,
+			args{zones: []string{}, negttl: 0, ttl: 0, geoDataFilePath: "/geoip.mmdb", geoDataFields: []string{"city.names.en", "country.iso_code", "continent.code"}},
+		},
+		{
+			"geodatafields takes precedence over geodatafield",
+			`
+						k8s_crd {
+							geodatafilepath /geoip.mmdb
+							geodatafield country.iso_code
+							geodatafields continent.code region.code
+						}`,
+			false,
+			args{zones: []string{}, negttl: 0, ttl: 0, geoDataFilePath: "/geoip.mmdb", geoDataField: "country.iso_code", geoDataFields: []string{"continent.code", "region.code"}},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

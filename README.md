@@ -48,12 +48,14 @@ k8s_crd example.com {
 In case dnsEndpoint object's target has a label of `strategy: geoip` CoreDNS `k8s_crd` plugin will respond in a special way:
 
 * Assuming record has multiple IPs associated with it, and DNS message comes with edns0 `CLIENT-SUBNET` option.
-* CoreDNS will compare the specified field tag (`datacenter` by default, configured via the `geodatafield` plugin option) for IP extracted from `CLIENT-SUBNET` option against available Endpoint.Targets
+* CoreDNS will compare the specified field tag(s) for IP extracted from `CLIENT-SUBNET` option against available Endpoint.Targets
 * Return only IPs where tags match
 * If IP has no common tag, all entries are returned.
 * CoreDNS must be supplied with a specially crafted GeoIP database in MaxMind DB format and mounted (at `/geoip.mmdb` by default, configured via the `geodatafilepath` plugin option). Refer to [./terratest/geogen](./terratest/geogen) for examples. Using the MaxMind GeoLite2 database is supported using the necessary `geodatafield` to configure the field to use as required.
 
-The following configuration options are available:
+#### Single Field Matching
+
+For simple GeoIP matching using a single field:
 
 ```text
 k8s_crd example.com {
@@ -62,6 +64,20 @@ k8s_crd example.com {
     ...
 }
 ```
+
+#### Hierarchical Multi-Level Matching
+
+For hierarchical matching with multiple fields in priority order, use `geodatafields` (plural). The plugin will try each field in order and return matches from the first field that produces results:
+
+```text
+k8s_crd example.com {
+    geodatafilepath /geoip.mmdb
+    geodatafields country.iso_code continent.code
+    ...
+}
+```
+
+**Note:** If both `geodatafield` and `geodatafields` are specified, `geodatafields` takes precedence. For backward compatibility, `geodatafield` (singular) is still supported.
 
 ### Weight Round Robin
 
