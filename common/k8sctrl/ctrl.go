@@ -144,6 +144,41 @@ func (ctrl *KubeController) getEndpointByName(host string, clientIP net.IP, geoD
 	return lep
 }
 
+// matchesWildcard checks if a hostname matches a wildcard pattern (e.g., *.example.com matches test.example.com)
+func matchesWildcard(pattern, hostname string) bool {
+	if !strings.HasPrefix(pattern, "*.") {
+		return false
+	}
+
+	// Extract the domain part from the wildcard pattern (e.g., "example.com" from "*.example.com")
+	wildcardDomain := pattern[2:]
+
+	// The hostname must end with the wildcard domain
+	if !strings.HasSuffix(strings.ToLower(hostname), strings.ToLower(wildcardDomain)) {
+		return false
+	}
+
+	// The hostname must have at least one label before the wildcard domain
+	// e.g., "test.example.com" matches "*.example.com", but "example.com" does not
+	if len(hostname) <= len(wildcardDomain) {
+		return false
+	}
+
+	// The character before the wildcard domain must be a dot
+	if hostname[len(hostname)-len(wildcardDomain)-1] != '.' {
+		return false
+	}
+
+	// The hostname should not have more dots than the wildcard allows
+	// *.example.com matches test.example.com but not sub.test.example.com
+	hostPrefix := hostname[:len(hostname)-len(wildcardDomain)-1]
+	if strings.Contains(hostPrefix, ".") {
+		return false
+	}
+
+	return true
+}
+
 // The function tries to find all case sensitive variants.  Returns a map where the call is hostname and the value is LocalDNSEndpoint
 func (ctrl *KubeController) getEndpointsByCaseInsensitiveName(host string, clientIP net.IP, geoDataFilePath string, geoDataFieldPath ...string) (result map[string]LocalDNSEndpoint) {
 
@@ -152,7 +187,12 @@ func (ctrl *KubeController) getEndpointsByCaseInsensitiveName(host string, clien
 	extractLocalEndpoints := func(ep *v1alpha1.DNSEndpoint, ip net.IP, host string, geoDataFieldPath ...string) (result []LocalDNSEndpoint) {
 		result = []LocalDNSEndpoint{}
 		for _, e := range ep.Spec.Endpoints {
-			if strings.EqualFold(e.DNSName, host) {
+			// Check for exact match first (takes precedence over wildcard)
+			exactMatch := strings.EqualFold(e.DNSName, host)
+			// Check for wildcard match
+			wildcardMatch := matchesWildcard(e.DNSName, host)
+
+			if exactMatch || wildcardMatch {
 				r := LocalDNSEndpoint{}
 				r.DNSName = e.DNSName
 				r.Labels = e.Labels
@@ -175,16 +215,32 @@ func (ctrl *KubeController) getEndpointsByCaseInsensitiveName(host string, clien
 		epList = append(epList, endpointController.GetIndexer().List()...)
 	}
 	result = make(map[string]LocalDNSEndpoint, 0)
+	var wildcardMatches []LocalDNSEndpoint
+
 	for _, obj := range epList {
 		ep := obj.(*v1alpha1.DNSEndpoint)
 		extracts := extractLocalEndpoints(ep, clientIP, host, geoDataFieldPath...)
 		for _, extracted := range extracts {
+			// Exact match takes precedence
 			if strings.EqualFold(extracted.DNSName, host) {
 				result[extracted.DNSName] = extracted
-				log.Debugf("including DNSEndpoint: %s", extracted.String())
+				log.Debugf("including DNSEndpoint (exact match): %s", extracted.String())
+			} else if matchesWildcard(extracted.DNSName, host) {
+				// Collect wildcard matches separately
+				wildcardMatches = append(wildcardMatches, extracted)
+				log.Debugf("found wildcard match: %s for query %s", extracted.DNSName, host)
 			}
 		}
 	}
+
+	// If no exact matches were found, use wildcard matches
+	if len(result) == 0 && len(wildcardMatches) > 0 {
+		for _, wm := range wildcardMatches {
+			result[wm.DNSName] = wm
+			log.Debugf("including DNSEndpoint (wildcard match): %s", wm.String())
+		}
+	}
+
 	return result
 }
 
@@ -192,9 +248,12 @@ func (ctrl *KubeController) margeLocalDNSEndpoints(host string, endpoints map[st
 	result := LocalDNSEndpoint{
 		DNSName: host,
 	}
-	result.Labels = endpoints[host].Labels
-	result.TTL = endpoints[host].TTL
+	// Use the first endpoint's labels and TTL (they should all be from exact matches or wildcards, not mixed)
 	for _, ep := range endpoints {
+		if result.Labels == nil {
+			result.Labels = ep.Labels
+			result.TTL = ep.TTL
+		}
 		result.Targets = append(result.Targets, ep.Targets...)
 	}
 	return result
