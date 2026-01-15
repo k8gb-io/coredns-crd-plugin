@@ -6,9 +6,9 @@ require (
 	github.com/coredns/caddy v1.1.2-0.20241029205200-8de985351a98
 	github.com/coredns/coredns v1.12.4
 	github.com/k8gb-io/go-weight-shuffling v0.4.0
-	github.com/maxmind/mmdbwriter v1.1.0
+	github.com/maxmind/mmdbwriter v1.2.0
 	github.com/miekg/dns v1.1.70
-	github.com/oschwald/maxminddb-golang v1.13.0
+	github.com/oschwald/maxminddb-golang v1.13.1
 	github.com/oschwald/maxminddb-golang/v2 v2.1.1
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
