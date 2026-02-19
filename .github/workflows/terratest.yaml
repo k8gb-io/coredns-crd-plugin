@@ -16,6 +16,9 @@ on:
       - '**.drawio'
       - '.spelling'
 
+env:
+  K3D_VERSION: v5.8.3
+
 jobs:
   skip-check:
     runs-on: ubuntu-24.04
@@ -50,6 +53,7 @@ jobs:
           cluster-name: "coredns-crd"
           args: >-
             --config=k3d-cluster.yaml
+          k3d-version: ${{ env.K3D_VERSION }}
       - name: test
         run: |
           make terratest
