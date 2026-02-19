@@ -1,4 +1,4 @@
-FROM alpine:3.23.3
+FROM gcr.io/distroless/static-debian12:nonroot
 COPY coredns /
 EXPOSE 53 53/udp
 ENTRYPOINT ["/coredns"]
