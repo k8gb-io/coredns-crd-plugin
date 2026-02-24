@@ -1,7 +1,7 @@
 coredns:
   isClusterService: false
   image:
-    repository: absaoss/k8s_crd
+    repository: ghcr.io/k8gb-io/k8s_crd
     tag: "latest"
   serviceType: LoadBalancer
   serviceAccount:

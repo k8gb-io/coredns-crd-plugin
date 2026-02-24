@@ -17,7 +17,7 @@
 BIN := k8s_crd
 
 # Where to push the docker image.
-REGISTRY ?= docker.io/absaoss
+REGISTRY ?= ghcr.io/k8gb-io
 
 # Tag 
 TAG ?= latest
@@ -69,7 +69,7 @@ destroy-local-cluster:
 	k3d cluster delete coredns-crd
 
 import-image:
-	k3d image import -c coredns-crd absaoss/k8s_crd:${TAG}
+	k3d image import -c coredns-crd ${IMG}:${TAG}
 
 deploy-app: image import-image
 	kubectl config use-context k3d-coredns-crd
