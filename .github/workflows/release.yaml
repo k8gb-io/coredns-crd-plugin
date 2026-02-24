@@ -6,8 +6,8 @@ on:
       - "v*"
 
 permissions:
-  contents: read
-  packages: write
+  contents: write # to create Github Release automatically
+  packages: write # to push to GHCR.io
 
 jobs:
   build:
