@@ -15,21 +15,21 @@ builds:
 dockers:
 - use: buildx
 - image_templates:
-  - "absaoss/k8s_crd:{{ .Tag }}-amd64"
+  - "ghcr.io/k8gb-io/k8s_crd:{{ .Tag }}-amd64"
   dockerfile: Dockerfile
   build_flag_templates:
   - "--platform=linux/amd64"
 - image_templates:
-  - "absaoss/k8s_crd:{{ .Tag }}-arm64"
+  - "ghcr.io/k8gb-io/k8s_crd:{{ .Tag }}-arm64"
   goarch: arm64
   dockerfile: Dockerfile
   build_flag_templates:
   - "--platform=linux/arm64"
 docker_manifests:
-- name_template: absaoss/k8s_crd:{{ .Tag }}
+- name_template: ghcr.io/k8gb-io/k8s_crd:{{ .Tag }}
   image_templates:
-  - absaoss/k8s_crd:{{ .Tag }}-amd64
-  - absaoss/k8s_crd:{{ .Tag }}-arm64
+  - ghcr.io/k8gb-io/k8s_crd:{{ .Tag }}-amd64
+  - ghcr.io/k8gb-io/k8s_crd:{{ .Tag }}-arm64
 checksum:
   name_template: 'checksums.txt'
 snapshot:

@@ -115,7 +115,7 @@ For more information about balancing, please visit our [go-weight-shuffling](htt
 git clone https://github.com/coredns/coredns
 cd coredns
 vim plugin.cfg
-# Replace lines with kubernetes and k8s_external with k8s_crd:github.com/absaoss/k8s_crd
+# Replace lines with kubernetes and k8s_external with k8s_crd:github.com/k8gb-io/coredns-crd-plugin
 go generate
 go build
 ./coredns -plugins | grep k8s_crd
@@ -124,8 +124,8 @@ go build
 ### With external golang source code
 
 ```shell
-git clone https://github.com/absaoss/k8s_crd.git
-cd k8s_crd
+git clone https://github.com/k8gb-io/coredns-crd-plugin.git
+cd coredns-crd-plugin
 go build cmd/coredns.go
 ./coredns -plugins | grep k8s_crd
 ```
