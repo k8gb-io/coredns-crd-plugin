@@ -226,3 +226,203 @@ func getClient(i rest.Interface) (c *dnsendpoint.ExtDNSClient) {
 	*q = i
 	return c
 }
+
+func TestMatchesWildcard(t *testing.T) {
+	tests := []struct {
+		name     string
+		pattern  string
+		hostname string
+		expected bool
+	}{
+		{
+			name:     "exact wildcard match",
+			pattern:  "*.example.com",
+			hostname: "test.example.com",
+			expected: true,
+		},
+		{
+			name:     "wildcard match case insensitive",
+			pattern:  "*.example.com",
+			hostname: "TEST.EXAMPLE.COM",
+			expected: true,
+		},
+		{
+			name:     "wildcard should not match apex domain",
+			pattern:  "*.example.com",
+			hostname: "example.com",
+			expected: false,
+		},
+		{
+			name:     "wildcard should not match subdomain",
+			pattern:  "*.example.com",
+			hostname: "sub.test.example.com",
+			expected: false,
+		},
+		{
+			name:     "wildcard should not match different domain",
+			pattern:  "*.example.com",
+			hostname: "test.example.org",
+			expected: false,
+		},
+		{
+			name:     "non-wildcard pattern should not match",
+			pattern:  "test.example.com",
+			hostname: "test.example.com",
+			expected: false,
+		},
+		{
+			name:     "wildcard with multiple labels",
+			pattern:  "*.cloud.example.com",
+			hostname: "app.cloud.example.com",
+			expected: true,
+		},
+		{
+			name:     "wildcard with multiple labels should not match deeper subdomain",
+			pattern:  "*.cloud.example.com",
+			hostname: "sub.app.cloud.example.com",
+			expected: false,
+		},
+		{
+			name:     "wildcard should not match partial suffix",
+			pattern:  "*.example.com",
+			hostname: "testexample.com",
+			expected: false,
+		},
+		{
+			name:     "empty hostname should not match",
+			pattern:  "*.example.com",
+			hostname: "",
+			expected: false,
+		},
+		{
+			name:     "wildcard with dashes",
+			pattern:  "*.example-site.com",
+			hostname: "app-test.example-site.com",
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := matchesWildcard(tt.pattern, tt.hostname)
+			assert.Equal(t, tt.expected, result, "matchesWildcard(%q, %q) = %v, want %v", tt.pattern, tt.hostname, result, tt.expected)
+		})
+	}
+}
+
+func TestWildcardDNSEndpoint(t *testing.T) {
+	const label = "k8gb.absa.oss/dnstype=local"
+	var clientIP = []byte{0x0A, 0x0A, 0x0A, 0x01}
+
+	t.Run("wildcard match", func(t *testing.T) {
+		wildcardEP := &v1alpha1.DNSEndpoint{
+			Spec: v1alpha1.DNSEndpointSpec{
+				Endpoints: []*endpoint.Endpoint{
+					{
+						DNSName: "*.example.com",
+						Targets: []string{"192.168.1.1", "192.168.1.2"},
+						Labels:  map[string]string{"strategy": "roundrobin"},
+					},
+				},
+			},
+		}
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		mctrl := mocks.NewMockInterface(ctrl)
+		mcache := mocks.NewMockSharedIndexInformer(ctrl)
+		midx := mocks.NewMockIndexer(ctrl)
+
+		midx.EXPECT().List().Return([]interface{}{wildcardEP}).AnyTimes()
+		mcache.EXPECT().GetIndexer().Return(midx).AnyTimes()
+
+		client := getClient(mctrl)
+		k8sctrl := NewKubeController(context.TODO(), client, []string{label})
+		k8sctrl.endpointControllers = []cache.SharedIndexInformer{mcache}
+
+		// Query for a subdomain that should match the wildcard
+		lep := k8sctrl.getEndpointByName("test.example.com", clientIP, "")
+		assert.NotNil(t, lep)
+		assert.Equal(t, 2, len(lep.Targets))
+		assert.Contains(t, lep.Targets, "192.168.1.1")
+		assert.Contains(t, lep.Targets, "192.168.1.2")
+	})
+
+	t.Run("wildcard should not match apex domain", func(t *testing.T) {
+		wildcardEP := &v1alpha1.DNSEndpoint{
+			Spec: v1alpha1.DNSEndpointSpec{
+				Endpoints: []*endpoint.Endpoint{
+					{
+						DNSName: "*.example.com",
+						Targets: []string{"192.168.1.1", "192.168.1.2"},
+						Labels:  map[string]string{"strategy": "roundrobin"},
+					},
+				},
+			},
+		}
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		mctrl := mocks.NewMockInterface(ctrl)
+		mcache := mocks.NewMockSharedIndexInformer(ctrl)
+		midx := mocks.NewMockIndexer(ctrl)
+
+		midx.EXPECT().List().Return([]interface{}{wildcardEP}).AnyTimes()
+		mcache.EXPECT().GetIndexer().Return(midx).AnyTimes()
+
+		client := getClient(mctrl)
+		k8sctrl := NewKubeController(context.TODO(), client, []string{label})
+		k8sctrl.endpointControllers = []cache.SharedIndexInformer{mcache}
+
+		// Query for apex domain should not match wildcard
+		lep := k8sctrl.getEndpointByName("example.com", clientIP, "")
+		assert.NotNil(t, lep)
+		assert.Equal(t, 0, len(lep.Targets))
+	})
+
+	t.Run("exact match takes precedence over wildcard", func(t *testing.T) {
+		wildcardEP := &v1alpha1.DNSEndpoint{
+			Spec: v1alpha1.DNSEndpointSpec{
+				Endpoints: []*endpoint.Endpoint{
+					{
+						DNSName: "*.example.com",
+						Targets: []string{"192.168.1.1", "192.168.1.2"},
+						Labels:  map[string]string{"strategy": "roundrobin"},
+					},
+				},
+			},
+		}
+
+		exactMatchEP := &v1alpha1.DNSEndpoint{
+			Spec: v1alpha1.DNSEndpointSpec{
+				Endpoints: []*endpoint.Endpoint{
+					{
+						DNSName: "specific.example.com",
+						Targets: []string{"10.0.0.1"},
+						Labels:  map[string]string{},
+					},
+				},
+			},
+		}
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		mctrl := mocks.NewMockInterface(ctrl)
+		mcache := mocks.NewMockSharedIndexInformer(ctrl)
+		midx := mocks.NewMockIndexer(ctrl)
+
+		midx.EXPECT().List().Return([]interface{}{wildcardEP, exactMatchEP}).AnyTimes()
+		mcache.EXPECT().GetIndexer().Return(midx).AnyTimes()
+
+		client := getClient(mctrl)
+		k8sctrl := NewKubeController(context.TODO(), client, []string{label})
+		k8sctrl.endpointControllers = []cache.SharedIndexInformer{mcache}
+
+		// Query for specific.example.com should return exact match, not wildcard
+		lep := k8sctrl.getEndpointByName("specific.example.com", clientIP, "")
+		assert.NotNil(t, lep)
+		assert.Equal(t, 1, len(lep.Targets), "Expected 1 target, got %d: %v", len(lep.Targets), lep.Targets)
+		assert.Contains(t, lep.Targets, "10.0.0.1")
+		assert.NotContains(t, lep.Targets, "192.168.1.1")
+	})
+}
