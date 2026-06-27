@@ -40,7 +40,19 @@ import (
 //   192.201.0.3 → JP (country: JP, continent: AS, city: Tokyo)
 
 func TestExtractGeo(t *testing.T) {
-	const testGeoDBPath = "testdata/test-geoip.mmdb"
+	const (
+		testGeoDBPath     = "testdata/test-geoip.mmdb"
+		clientUSIP        = "192.201.0.1"
+		clientUKIP        = "192.201.0.2"
+		endpointUSIP      = "192.200.0.1"
+		endpointUKIP      = "192.200.0.2"
+		endpointJPIP      = "192.200.0.3"
+		endpointCAIP      = "192.200.0.4"
+		geoFieldCountry   = "country"
+		geoFieldContinent = "continent"
+		geoFieldISOCode   = "iso_code"
+		geoFieldCode      = "code"
+	)
 
 	tests := []struct {
 		name       string
@@ -53,132 +65,132 @@ func TestExtractGeo(t *testing.T) {
 	}{
 		{
 			name:       "empty geoDataFilePath",
-			clientIP:   "192.201.0.1",
-			targets:    []string{"192.200.0.1"},
-			fieldPaths: [][]string{{"country", "iso_code"}},
+			clientIP:   clientUSIP,
+			targets:    []string{endpointUSIP},
+			fieldPaths: [][]string{{geoFieldCountry, geoFieldISOCode}},
 			geoDBPath:  "",
 			expected:   nil,
 		},
 		{
 			name:       "empty field paths",
-			clientIP:   "192.201.0.1",
-			targets:    []string{"192.200.0.1"},
+			clientIP:   clientUSIP,
+			targets:    []string{endpointUSIP},
 			fieldPaths: [][]string{},
 			geoDBPath:  testGeoDBPath,
 			expected:   nil,
 		},
 		{
 			name:       "single field match",
-			clientIP:   "192.201.0.1",
-			targets:    []string{"192.200.0.1", "192.200.0.2", "192.200.0.3"},
-			fieldPaths: [][]string{{"country", "iso_code"}},
+			clientIP:   clientUSIP,
+			targets:    []string{endpointUSIP, endpointUKIP, endpointJPIP},
+			fieldPaths: [][]string{{geoFieldCountry, geoFieldISOCode}},
 			geoDBPath:  testGeoDBPath,
-			expected:   []string{"192.200.0.1"},
+			expected:   []string{endpointUSIP},
 		},
 		{
 			name:     "hierarchical match - first field matches",
-			clientIP: "192.201.0.1",
-			targets:  []string{"192.200.0.1", "192.200.0.4"},
+			clientIP: clientUSIP,
+			targets:  []string{endpointUSIP, endpointCAIP},
 			fieldPaths: [][]string{
-				{"country", "iso_code"},
-				{"continent", "code"},
+				{geoFieldCountry, geoFieldISOCode},
+				{geoFieldContinent, geoFieldCode},
 			},
 			geoDBPath: testGeoDBPath,
-			expected:  []string{"192.200.0.1"},
+			expected:  []string{endpointUSIP},
 		},
 		{
 			name:     "hierarchical match - second field matches",
-			clientIP: "192.201.0.1",
-			targets:  []string{"192.200.0.2", "192.200.0.4"},
+			clientIP: clientUSIP,
+			targets:  []string{endpointUKIP, endpointCAIP},
 			fieldPaths: [][]string{
-				{"country", "iso_code"},
-				{"continent", "code"},
+				{geoFieldCountry, geoFieldISOCode},
+				{geoFieldContinent, geoFieldCode},
 			},
 			geoDBPath: testGeoDBPath,
-			expected:  []string{"192.200.0.4"},
+			expected:  []string{endpointCAIP},
 		},
 		{
 			name:     "hierarchical match - no matches",
-			clientIP: "192.201.0.1",
-			targets:  []string{"192.200.0.2", "192.200.0.3"},
+			clientIP: clientUSIP,
+			targets:  []string{endpointUKIP, endpointJPIP},
 			fieldPaths: [][]string{
-				{"country", "iso_code"},
-				{"continent", "code"},
+				{geoFieldCountry, geoFieldISOCode},
+				{geoFieldContinent, geoFieldCode},
 			},
 			geoDBPath: testGeoDBPath,
 			expected:  nil,
 		},
 		{
 			name:       "multiple matches same field",
-			clientIP:   "192.201.0.1",
-			targets:    []string{"192.200.0.1", "192.200.0.4", "192.200.0.2"},
-			fieldPaths: [][]string{{"continent", "code"}},
+			clientIP:   clientUSIP,
+			targets:    []string{endpointUSIP, endpointCAIP, endpointUKIP},
+			fieldPaths: [][]string{{geoFieldContinent, geoFieldCode}},
 			geoDBPath:  testGeoDBPath,
-			expected:   []string{"192.200.0.1", "192.200.0.4"},
+			expected:   []string{endpointUSIP, endpointCAIP},
 			matchAny:   true,
 		},
 		{
 			name:     "three level hierarchy",
-			clientIP: "192.201.0.1",
-			targets:  []string{"192.200.0.4", "192.200.0.2"},
+			clientIP: clientUSIP,
+			targets:  []string{endpointCAIP, endpointUKIP},
 			fieldPaths: [][]string{
 				{"city", "names", "en"},
-				{"country", "iso_code"},
-				{"continent", "code"},
+				{geoFieldCountry, geoFieldISOCode},
+				{geoFieldContinent, geoFieldCode},
 			},
 			geoDBPath: testGeoDBPath,
-			expected:  []string{"192.200.0.4"},
+			expected:  []string{endpointCAIP},
 		},
 		{
 			name:       "client IP not in database",
 			clientIP:   "1.2.3.4",
-			targets:    []string{"192.200.0.1"},
-			fieldPaths: [][]string{{"country", "iso_code"}},
+			targets:    []string{endpointUSIP},
+			fieldPaths: [][]string{{geoFieldCountry, geoFieldISOCode}},
 			geoDBPath:  testGeoDBPath,
 			expected:   nil,
 		},
 		{
 			name:       "endpoint IP not in database",
-			clientIP:   "192.201.0.1",
-			targets:    []string{"192.200.0.1", "5.6.7.8"},
-			fieldPaths: [][]string{{"country", "iso_code"}},
+			clientIP:   clientUSIP,
+			targets:    []string{endpointUSIP, "5.6.7.8"},
+			fieldPaths: [][]string{{geoFieldCountry, geoFieldISOCode}},
 			geoDBPath:  testGeoDBPath,
-			expected:   []string{"192.200.0.1"},
+			expected:   []string{endpointUSIP},
 		},
 		{
 			name:     "invalid field path",
-			clientIP: "192.201.0.1",
-			targets:  []string{"192.200.0.1"},
+			clientIP: clientUSIP,
+			targets:  []string{endpointUSIP},
 			fieldPaths: [][]string{
 				{"nonexistent", "field"},
-				{"country", "iso_code"},
+				{geoFieldCountry, geoFieldISOCode},
 			},
 			geoDBPath: testGeoDBPath,
-			expected:  []string{"192.200.0.1"},
+			expected:  []string{endpointUSIP},
 		},
 		{
 			name:       "invalid endpoint IP string",
-			clientIP:   "192.201.0.2",
-			targets:    []string{"192.200.0.1", "not-an-ip", "192.200.0.2"},
-			fieldPaths: [][]string{{"country", "iso_code"}},
+			clientIP:   clientUKIP,
+			targets:    []string{endpointUSIP, "not-an-ip", endpointUKIP},
+			fieldPaths: [][]string{{geoFieldCountry, geoFieldISOCode}},
 			geoDBPath:  testGeoDBPath,
-			expected:   []string{"192.200.0.2"},
+			expected:   []string{endpointUKIP},
 		},
 		{
 			name:       "city level matching",
-			clientIP:   "192.201.0.2",
-			targets:    []string{"192.200.0.1", "192.200.0.2", "192.200.0.3"},
+			clientIP:   clientUKIP,
+			targets:    []string{endpointUSIP, endpointUKIP, endpointJPIP},
 			fieldPaths: [][]string{{"city", "names", "en"}},
 			geoDBPath:  testGeoDBPath,
-			expected:   []string{"192.200.0.2"},
+			expected:   []string{endpointUKIP},
 		},
 		{
 			name:       "all endpoints match continent",
-			clientIP:   "192.201.0.2",
-			targets:    []string{"192.200.0.2", "192.200.0.5"},
-			fieldPaths: [][]string{{"continent", "code"}},
+			clientIP:   clientUKIP,
+			targets:    []string{endpointUKIP, "192.200.0.5"},
+			fieldPaths: [][]string{{geoFieldContinent, geoFieldCode}},
 			geoDBPath:  testGeoDBPath,
-			expected:   []string{"192.200.0.2", "192.200.0.5"},
+			expected:   []string{endpointUKIP, "192.200.0.5"},
 			matchAny:   true,
 		},
 	}

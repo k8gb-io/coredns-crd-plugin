@@ -44,6 +44,8 @@ func TestKubeController(t *testing.T) {
 	const hostCaseInsensitive = "roundrobin-case-insensitive.cloud.example.com"
 	const embeddedCaseSensitive = "embedded.CLOUD.EXAMPLE.COM"
 	const embeddedCaseInsensitive = "embedded.cloud.example.com"
+	const strategyLabel = "strategy"
+	const roundRobinStrategy = "roundrobin"
 	var clientIP = []byte{0x0A, 0x0A, 0x0A, 0x01}
 	defaultEP := &v1alpha1.DNSEndpoint{
 		Spec: v1alpha1.DNSEndpointSpec{
@@ -53,17 +55,17 @@ func TestKubeController(t *testing.T) {
 				},
 				{
 					DNSName: host,
-					Labels:  map[string]string{"strategy": "roundrobin"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy},
 					Targets: []string{"10.0.0.1", "10.0.0.2"},
 				},
 				{
 					DNSName: hOSTCaseInsensitive,
-					Labels:  map[string]string{"strategy": "roundrobin"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy},
 					Targets: []string{"1.1.1.1", "1.1.1.2"},
 				},
 				{
 					DNSName: hostCaseInsensitive,
-					Labels:  map[string]string{"strategy": "roundrobin"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy},
 					Targets: []string{"2.2.2.2"},
 				},
 			},
@@ -78,7 +80,7 @@ func TestKubeController(t *testing.T) {
 				},
 				{
 					DNSName: hOSTCaseInsensitive,
-					Labels:  map[string]string{"strategy": "roundrobin"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy},
 					Targets: []string{"1.1.1.1", "1.1.1.2"},
 				},
 			},
@@ -93,7 +95,7 @@ func TestKubeController(t *testing.T) {
 				},
 				{
 					DNSName: hostCaseInsensitive,
-					Labels:  map[string]string{"strategy": "roundrobin"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy},
 					Targets: []string{"2.2.2.2"},
 				},
 			},
@@ -108,12 +110,12 @@ func TestKubeController(t *testing.T) {
 				},
 				{
 					DNSName: embeddedCaseInsensitive,
-					Labels:  map[string]string{"strategy": "roundrobin"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy},
 					Targets: []string{"10.10.10.32", "10.10.10.30"},
 				},
 				{
 					DNSName: embeddedCaseSensitive,
-					Labels:  map[string]string{"strategy": "roundrobin"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy},
 					Targets: []string{"10.10.10.2"},
 				},
 			},

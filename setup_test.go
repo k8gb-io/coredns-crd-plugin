@@ -27,6 +27,12 @@ import (
 )
 
 func TestParseArguments(t *testing.T) {
+	const (
+		geoDataFilePath     = "/geoip.mmdb"
+		countryISOCodeField = "country.iso_code"
+		continentCodeField  = "continent.code"
+	)
+
 	var tests = []struct {
 		name          string
 		configuration string
@@ -112,7 +118,7 @@ func TestParseArguments(t *testing.T) {
 							geodatafield country.iso_code
 						}`,
 			false,
-			args{zones: []string{}, negttl: 0, ttl: 0, geoDataFilePath: "/geoip.mmdb", geoDataField: "country.iso_code"},
+			args{zones: []string{}, negttl: 0, ttl: 0, geoDataFilePath: geoDataFilePath, geoDataField: countryISOCodeField},
 		},
 		{
 			"geodatafields - multiple fields",
@@ -122,7 +128,7 @@ func TestParseArguments(t *testing.T) {
 							geodatafields country.iso_code continent.code
 						}`,
 			false,
-			args{zones: []string{}, negttl: 0, ttl: 0, geoDataFilePath: "/geoip.mmdb", geoDataFields: []string{"country.iso_code", "continent.code"}},
+			args{zones: []string{}, negttl: 0, ttl: 0, geoDataFilePath: geoDataFilePath, geoDataFields: []string{countryISOCodeField, continentCodeField}},
 		},
 		{
 			"geodatafields - three fields with nested paths",
@@ -132,7 +138,7 @@ func TestParseArguments(t *testing.T) {
 							geodatafields city.names.en country.iso_code continent.code
 						}`,
 			false,
-			args{zones: []string{}, negttl: 0, ttl: 0, geoDataFilePath: "/geoip.mmdb", geoDataFields: []string{"city.names.en", "country.iso_code", "continent.code"}},
+			args{zones: []string{}, negttl: 0, ttl: 0, geoDataFilePath: geoDataFilePath, geoDataFields: []string{"city.names.en", countryISOCodeField, continentCodeField}},
 		},
 		{
 			"geodatafields takes precedence over geodatafield",
@@ -143,7 +149,7 @@ func TestParseArguments(t *testing.T) {
 							geodatafields continent.code region.code
 						}`,
 			false,
-			args{zones: []string{}, negttl: 0, ttl: 0, geoDataFilePath: "/geoip.mmdb", geoDataField: "country.iso_code", geoDataFields: []string{"continent.code", "region.code"}},
+			args{zones: []string{}, negttl: 0, ttl: 0, geoDataFilePath: geoDataFilePath, geoDataField: countryISOCodeField, geoDataFields: []string{continentCodeField, "region.code"}},
 		},
 	}
 	for _, test := range tests {

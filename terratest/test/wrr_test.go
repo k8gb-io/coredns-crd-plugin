@@ -29,6 +29,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	wrrIP1 = "172.18.0.3"
+	wrrIP2 = "172.18.0.4"
+	wrrIP3 = "172.18.0.5"
+	wrrIP4 = "172.18.0.6"
+)
+
 func TestWeightRoundRobinCornerCases(t *testing.T) {
 	const clientIP = ""
 	const dnsPort = 1053
@@ -64,17 +71,17 @@ func TestWeightRoundRobinCornerCases(t *testing.T) {
 		t.Run(test.host, func(t *testing.T) {
 			ips, err := DigIPs(t, dnsServer, dnsPort, test.host, dns.TypeA, clientIP)
 			require.NoError(t, err)
-			assert.True(t, containsValues(ips, []string{"172.18.0.3", "172.18.0.4", "172.18.0.5", "172.18.0.6"}))
+			assert.True(t, containsValues(ips, []string{wrrIP1, wrrIP2, wrrIP3, wrrIP4}))
 
 			result := []int{0, 0}
 			for i := 0; i < hitCount; i++ {
 				ips, err := DigIPs(t, dnsServer, dnsPort, test.host, dns.TypeA, clientIP)
 				require.NoError(t, err)
 				// ratio between these two combination would be the same ratio as defined by weight configuration
-				if same(ips, []string{"172.18.0.3", "172.18.0.4", "172.18.0.5", "172.18.0.6"}) {
+				if same(ips, []string{wrrIP1, wrrIP2, wrrIP3, wrrIP4}) {
 					result[0]++
 				}
-				if same(ips, []string{"172.18.0.5", "172.18.0.6", "172.18.0.3", "172.18.0.4"}) {
+				if same(ips, []string{wrrIP3, wrrIP4, wrrIP1, wrrIP2}) {
 					result[1]++
 				}
 			}
@@ -89,16 +96,16 @@ func TestWeightRoundRobinCornerCases(t *testing.T) {
 	}{
 		{
 			"weight-eu-0.example.org",
-			[]string{"172.18.0.3", "172.18.0.4"},
+			[]string{wrrIP1, wrrIP2},
 			func(ips []string) bool {
-				return same(ips, []string{"172.18.0.3", "172.18.0.4"}) || same(ips, []string{"172.18.0.4", "172.18.0.3"})
+				return same(ips, []string{wrrIP1, wrrIP2}) || same(ips, []string{wrrIP2, wrrIP1})
 			},
 		},
 		{
 			"weight-no-labels.example.org",
-			[]string{"172.18.0.3", "172.18.0.4"},
+			[]string{wrrIP1, wrrIP2},
 			func(ips []string) bool {
-				return containsValues(ips, []string{"172.18.0.4", "172.18.0.3"})
+				return containsValues(ips, []string{wrrIP2, wrrIP1})
 			},
 		},
 		{
@@ -111,30 +118,30 @@ func TestWeightRoundRobinCornerCases(t *testing.T) {
 		{
 			// this ends with warning, where label IPS doesn't match answer
 			"weight-less-labels-than-targets.example.org",
-			[]string{"172.18.0.3", "172.18.0.4", "172.18.0.5", "172.18.0.6"},
+			[]string{wrrIP1, wrrIP2, wrrIP3, wrrIP4},
 			func(ips []string) bool {
-				return containsValues(ips, []string{"172.18.0.3", "172.18.0.4", "172.18.0.5", "172.18.0.6"})
+				return containsValues(ips, []string{wrrIP1, wrrIP2, wrrIP3, wrrIP4})
 			},
 		},
 		{
 			"weight-eu-0-us-1.example.org",
-			[]string{"172.18.0.5", "172.18.0.6", "172.18.0.3", "172.18.0.4"},
+			[]string{wrrIP3, wrrIP4, wrrIP1, wrrIP2},
 			func(ips []string) bool {
-				return (ips[0] == "172.18.0.5" && ips[1] == "172.18.0.6") || (ips[0] == "172.18.0.6" && ips[1] == "172.18.0.5")
+				return (ips[0] == wrrIP3 && ips[1] == wrrIP4) || (ips[0] == wrrIP4 && ips[1] == wrrIP3)
 			},
 		},
 		{
 			"targets-has-different-ips.example.org",
-			[]string{"172.18.0.5", "172.18.0.6", "172.18.0.7", "172.18.0.8"},
+			[]string{wrrIP3, wrrIP4, "172.18.0.7", "172.18.0.8"},
 			func(ips []string) bool {
-				return containsValues(ips, []string{"172.18.0.5", "172.18.0.6", "172.18.0.7", "172.18.0.8"})
+				return containsValues(ips, []string{wrrIP3, wrrIP4, "172.18.0.7", "172.18.0.8"})
 			},
 		},
 		{
 			"unknown-strategy.example.org",
-			[]string{"172.18.0.5", "172.18.0.6", "172.18.0.3", "172.18.0.4"},
+			[]string{wrrIP3, wrrIP4, wrrIP1, wrrIP2},
 			func(ips []string) bool {
-				return containsValues(ips, []string{"172.18.0.3", "172.18.0.4", "172.18.0.5", "172.18.0.6"})
+				return containsValues(ips, []string{wrrIP1, wrrIP2, wrrIP3, wrrIP4})
 			},
 		},
 	}
@@ -175,7 +182,7 @@ func TestWeightRoundRobinShuffling(t *testing.T) {
 
 	ips, err := DigIPs(t, dnsServer, dnsPort, host, dns.TypeA, clientIP)
 	require.NoError(t, err)
-	assert.True(t, containsValues(ips, []string{"172.18.0.3", "172.18.0.4", "172.18.0.5", "172.18.0.6"}))
+	assert.True(t, containsValues(ips, []string{wrrIP1, wrrIP2, wrrIP3, wrrIP4}))
 
 	result := map[string]int{}
 	for i := 0; i < hitCount; i++ {
@@ -185,7 +192,7 @@ func TestWeightRoundRobinShuffling(t *testing.T) {
 			result[v] += 3 - i
 		}
 	}
-	fmt.Println(result["172.18.0.5"]+result["172.18.0.6"], " ", result["172.18.0.3"]+result["172.18.0.4"])
-	assert.True(t, (result["172.18.0.5"]+result["172.18.0.6"]) > 4000, result["172.18.0.5"]+result["172.18.0.6"])
-	assert.True(t, (result["172.18.0.3"]+result["172.18.0.4"]) < 2000, result["172.18.0.3"]+result["172.18.0.4"])
+	fmt.Println(result[wrrIP3]+result[wrrIP4], " ", result[wrrIP1]+result[wrrIP2])
+	assert.True(t, (result[wrrIP3]+result[wrrIP4]) > 4000, result[wrrIP3]+result[wrrIP4])
+	assert.True(t, (result[wrrIP1]+result[wrrIP2]) < 2000, result[wrrIP1]+result[wrrIP2])
 }

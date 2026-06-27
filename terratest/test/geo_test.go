@@ -51,7 +51,7 @@ func TestGeo(t *testing.T) {
 	options := k8s.NewKubectlOptions("", "", namespaceName)
 	mainNsOptions := k8s.NewKubectlOptions("", "", "coredns")
 	podFilter := metav1.ListOptions{
-		LabelSelector: "app.kubernetes.io/name=coredns",
+		LabelSelector: coreDNSLabelSelector,
 	}
 
 	k8s.CreateNamespace(t, options, namespaceName)

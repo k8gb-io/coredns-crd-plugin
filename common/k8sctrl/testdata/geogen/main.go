@@ -29,6 +29,15 @@ import (
 )
 
 func main() {
+	const (
+		countryKey   = "country"
+		isoCodeKey   = "iso_code"
+		continentKey = "continent"
+		codeKey      = "code"
+		cityKey      = "city"
+		namesKey     = "names"
+	)
+
 	fh, err := os.Create("../test-geoip.mmdb")
 	if err != nil {
 		log.Fatal(err)
@@ -47,70 +56,70 @@ func main() {
 	}
 
 	usData := mmdbtype.Map{
-		"country": mmdbtype.Map{
-			"iso_code": mmdbtype.String("US"),
+		countryKey: mmdbtype.Map{
+			isoCodeKey: mmdbtype.String("US"),
 		},
-		"continent": mmdbtype.Map{
-			"code": mmdbtype.String("NA"),
+		continentKey: mmdbtype.Map{
+			codeKey: mmdbtype.String("NA"),
 		},
-		"city": mmdbtype.Map{
-			"names": mmdbtype.Map{
+		cityKey: mmdbtype.Map{
+			namesKey: mmdbtype.Map{
 				"en": mmdbtype.String("New York"),
 			},
 		},
 	}
 
 	ukData := mmdbtype.Map{
-		"country": mmdbtype.Map{
-			"iso_code": mmdbtype.String("GB"),
+		countryKey: mmdbtype.Map{
+			isoCodeKey: mmdbtype.String("GB"),
 		},
-		"continent": mmdbtype.Map{
-			"code": mmdbtype.String("EU"),
+		continentKey: mmdbtype.Map{
+			codeKey: mmdbtype.String("EU"),
 		},
-		"city": mmdbtype.Map{
-			"names": mmdbtype.Map{
+		cityKey: mmdbtype.Map{
+			namesKey: mmdbtype.Map{
 				"en": mmdbtype.String("London"),
 			},
 		},
 	}
 
 	jpData := mmdbtype.Map{
-		"country": mmdbtype.Map{
-			"iso_code": mmdbtype.String("JP"),
+		countryKey: mmdbtype.Map{
+			isoCodeKey: mmdbtype.String("JP"),
 		},
-		"continent": mmdbtype.Map{
-			"code": mmdbtype.String("AS"),
+		continentKey: mmdbtype.Map{
+			codeKey: mmdbtype.String("AS"),
 		},
-		"city": mmdbtype.Map{
-			"names": mmdbtype.Map{
+		cityKey: mmdbtype.Map{
+			namesKey: mmdbtype.Map{
 				"en": mmdbtype.String("Tokyo"),
 			},
 		},
 	}
 
 	caData := mmdbtype.Map{
-		"country": mmdbtype.Map{
-			"iso_code": mmdbtype.String("CA"),
+		countryKey: mmdbtype.Map{
+			isoCodeKey: mmdbtype.String("CA"),
 		},
-		"continent": mmdbtype.Map{
-			"code": mmdbtype.String("NA"),
+		continentKey: mmdbtype.Map{
+			codeKey: mmdbtype.String("NA"),
 		},
-		"city": mmdbtype.Map{
-			"names": mmdbtype.Map{
+		cityKey: mmdbtype.Map{
+			namesKey: mmdbtype.Map{
 				"en": mmdbtype.String("Toronto"),
 			},
 		},
 	}
 
 	deData := mmdbtype.Map{
-		"country": mmdbtype.Map{
-			"iso_code": mmdbtype.String("DE"),
+		countryKey: mmdbtype.Map{
+			isoCodeKey: mmdbtype.String("DE"),
 		},
-		"continent": mmdbtype.Map{
-			"code": mmdbtype.String("EU"),
+		continentKey: mmdbtype.Map{
+			codeKey: mmdbtype.String("EU"),
 		},
-		"city": mmdbtype.Map{
-			"names": mmdbtype.Map{
+		cityKey: mmdbtype.Map{
+			namesKey: mmdbtype.Map{
 				"en": mmdbtype.String("Berlin"),
 			},
 		},
