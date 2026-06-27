@@ -85,6 +85,18 @@ func (mr *MockIndexerMockRecorder) AddIndexers(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddIndexers", reflect.TypeOf((*MockIndexer)(nil).AddIndexers), arg0)
 }
 
+// Bookmark mocks base method.
+func (m *MockIndexer) Bookmark(arg0 string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Bookmark", arg0)
+}
+
+// Bookmark indicates an expected call of Bookmark.
+func (mr *MockIndexerMockRecorder) Bookmark(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Bookmark", reflect.TypeOf((*MockIndexer)(nil).Bookmark), arg0)
+}
+
 // ByIndex mocks base method.
 func (m *MockIndexer) ByIndex(arg0, arg1 string) ([]any, error) {
 	m.ctrl.T.Helper()
@@ -188,6 +200,20 @@ func (m *MockIndexer) IndexKeys(arg0, arg1 string) ([]string, error) {
 func (mr *MockIndexerMockRecorder) IndexKeys(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexKeys", reflect.TypeOf((*MockIndexer)(nil).IndexKeys), arg0, arg1)
+}
+
+// LastStoreSyncResourceVersion mocks base method.
+func (m *MockIndexer) LastStoreSyncResourceVersion() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LastStoreSyncResourceVersion")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// LastStoreSyncResourceVersion indicates an expected call of LastStoreSyncResourceVersion.
+func (mr *MockIndexerMockRecorder) LastStoreSyncResourceVersion() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LastStoreSyncResourceVersion", reflect.TypeOf((*MockIndexer)(nil).LastStoreSyncResourceVersion))
 }
 
 // List mocks base method.
