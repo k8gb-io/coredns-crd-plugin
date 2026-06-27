@@ -51,7 +51,22 @@ func TestWeightRoundRobin(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	const host = "roundrobin.cloud.example.com"
+	const (
+		host               = "roundrobin.cloud.example.com"
+		strategyLabel      = "strategy"
+		roundRobinStrategy = "roundrobin"
+		ipv4Target1        = "10.240.0.1"
+		ipv4Target2        = "10.240.0.2"
+		ipv4Target3        = "10.240.1.1"
+		ipv6Target1        = "4001:a1:1014::89"
+		ipv6Target2        = "4001:a1:1014::8a"
+		ipv6Target3        = "4001:a1:1014::8b"
+		ipv6Target4        = "4001:a1:1014::ff"
+		weightEU0Label     = "weight-eu-0-50"
+		weightEU1Label     = "weight-eu-1-50"
+		weightUS0Label     = "weight-us-0-50"
+		weightZA0Label     = "weight-za-0-0"
+	)
 
 	rs1 := newRecordSet([]dns.RR{
 		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::89"),
@@ -67,11 +82,11 @@ func TestWeightRoundRobin(t *testing.T) {
 		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::8a"),
 		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::ff"),
 		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::8b"),
-	}, map[string]string{"strategy": "roundrobin",
-		"weight-eu-0-50": "4001:a1:1014::89",
-		"weight-eu-1-50": "4001:a1:1014::8a",
-		"weight-za-0-0":  "4001:a1:1014::8b",
-		"weight-us-0-50": "4001:a1:1014::ff"})
+	}, map[string]string{strategyLabel: roundRobinStrategy,
+		weightEU0Label: ipv6Target1,
+		weightEU1Label: ipv6Target2,
+		weightZA0Label: ipv6Target3,
+		weightUS0Label: ipv6Target4})
 
 	rs2 := newRecordSet([]dns.RR{
 		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::89"),
@@ -81,18 +96,18 @@ func TestWeightRoundRobin(t *testing.T) {
 		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::89"),
 		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::ff"),
 		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::8b"),
-	}, map[string]string{"strategy": "roundrobin",
-		"weight-eu-0-50": "4001:a1:1014::89",
-		"weight-za-0-0":  "4001:a1:1014::8b",
-		"weight-us-0-50": "4001:a1:1014::ff"})
+	}, map[string]string{strategyLabel: roundRobinStrategy,
+		weightEU0Label: ipv6Target1,
+		weightZA0Label: ipv6Target3,
+		weightUS0Label: ipv6Target4})
 
 	rs3 := newRecordSet([]dns.RR{
 		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::89"),
 		test.AAAA("alpha.cloud.example.com.		300	IN	AAAA		4001:a1:1014::8b"),
-	}, []dns.RR{}, map[string]string{"strategy": "roundrobin",
-		"weight-eu-0-50": "4001:a1:1014::89",
-		"weight-za-0-0":  "4001:a1:1014::8b",
-		"weight-us-0-50": "4001:a1:1014::ff"})
+	}, []dns.RR{}, map[string]string{strategyLabel: roundRobinStrategy,
+		weightEU0Label: ipv6Target1,
+		weightZA0Label: ipv6Target3,
+		weightUS0Label: ipv6Target4})
 
 	rs4 := newRecordSet([]dns.RR{
 		test.A("alpha.cloud.example.com.		300	IN	A		10.0.0.1"),
@@ -108,11 +123,11 @@ func TestWeightRoundRobin(t *testing.T) {
 		test.A("alpha.cloud.example.com.		300	IN	A		10.0.0.2"),
 		test.A("alpha.cloud.example.com.		300	IN	A		10.20.0.1"),
 		test.A("alpha.cloud.example.com.		300	IN	A		10.10.0.1"),
-	}, map[string]string{"strategy": "roundrobin",
-		"weight-eu-0-50": "10.0.0.1",
-		"weight-eu-1-50": "10.0.0.2",
-		"weight-za-0-0":  "10.10.0.1",
-		"weight-us-0-50": "10.20.0.1"})
+	}, map[string]string{strategyLabel: roundRobinStrategy,
+		weightEU0Label: "10.0.0.1",
+		weightEU1Label: "10.0.0.2",
+		weightZA0Label: "10.10.0.1",
+		weightUS0Label: "10.20.0.1"})
 
 	tests := []struct {
 		name          string
@@ -162,8 +177,8 @@ func TestWeightRoundRobin(t *testing.T) {
 			lookup: func(indexKey string, clientIP net.IP, _ string, _ [][]string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
-					Labels:  map[string]string{"strategy": "roundrobin"},
-					Targets: []string{"10.240.0.1"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy},
+					Targets: []string{ipv4Target1},
 				}
 			},
 			rcode: dns.RcodeSuccess,
@@ -181,8 +196,8 @@ func TestWeightRoundRobin(t *testing.T) {
 			lookup: func(indexKey string, clientIP net.IP, _ string, _ [][]string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
-					Labels:  map[string]string{"strategy": "roundrobin", "weight-0-eu": "10.240.0.1"},
-					Targets: []string{"10.240.0.1"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy, "weight-0-eu": ipv4Target1},
+					Targets: []string{ipv4Target1},
 				}
 			},
 			rcode: dns.RcodeServerFailure,
@@ -203,8 +218,8 @@ func TestWeightRoundRobin(t *testing.T) {
 			lookup: func(indexKey string, clientIP net.IP, _ string, _ [][]string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
-					Labels:  map[string]string{"strategy": "roundrobin", "weight-0-eu-1": "10.240.0.1", "weight-0-us-1": "10.240.0.2"},
-					Targets: []string{"10.240.0.1"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy, "weight-0-eu-1": ipv4Target1, "weight-0-us-1": ipv4Target2},
+					Targets: []string{ipv4Target1},
 				}
 			},
 			rcode: dns.RcodeSuccess,
@@ -224,8 +239,8 @@ func TestWeightRoundRobin(t *testing.T) {
 			lookup: func(indexKey string, clientIP net.IP, _ string, _ [][]string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
-					Labels:  map[string]string{"strategy": "roundrobin", "weight-eu-0-1": "10.240.0.1"},
-					Targets: []string{"10.240.0.1"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy, "weight-eu-0-1": ipv4Target1},
+					Targets: []string{ipv4Target1},
 				}
 			},
 			rcode: dns.RcodeSuccess,
@@ -245,8 +260,8 @@ func TestWeightRoundRobin(t *testing.T) {
 			lookup: func(indexKey string, clientIP net.IP, _ string, _ [][]string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
-					Labels:  map[string]string{"strategy": "roundrobin", "weight-eu-0-100": "10.240.0.1"},
-					Targets: []string{"10.240.0.1"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy, "weight-eu-0-100": ipv4Target1},
+					Targets: []string{ipv4Target1},
 				}
 			},
 			rcode: dns.RcodeSuccess,
@@ -267,8 +282,8 @@ func TestWeightRoundRobin(t *testing.T) {
 			lookup: func(indexKey string, clientIP net.IP, _ string, _ [][]string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
-					Labels:  map[string]string{"strategy": "roundrobin", "weight-us-0-50": "10.240.0.1"},
-					Targets: []string{"10.240.0.1"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy, weightUS0Label: ipv4Target1},
+					Targets: []string{ipv4Target1},
 				}
 			},
 			rcode: dns.RcodeSuccess,
@@ -289,8 +304,8 @@ func TestWeightRoundRobin(t *testing.T) {
 			lookup: func(indexKey string, clientIP net.IP, _ string, _ [][]string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
-					Labels:  map[string]string{"strategy": "roundrobin", "weight-eu-0-50": "10.240.0.1", "weight-us-0-50": "10.240.0.2"},
-					Targets: []string{"10.240.0.1"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy, weightEU0Label: ipv4Target1, weightUS0Label: ipv4Target2},
+					Targets: []string{ipv4Target1},
 				}
 			},
 			rcode: dns.RcodeSuccess,
@@ -311,8 +326,8 @@ func TestWeightRoundRobin(t *testing.T) {
 			lookup: func(indexKey string, clientIP net.IP, _ string, _ [][]string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
-					Labels:  map[string]string{"strategy": "roundrobin", "weight-eu-0-50": "10.240.0.1", "weight-us-0-50": "10.240.1.1"},
-					Targets: []string{"10.240.0.1"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy, weightEU0Label: ipv4Target1, weightUS0Label: ipv4Target3},
+					Targets: []string{ipv4Target1},
 				}
 			},
 			rcode: dns.RcodeSuccess,
@@ -333,8 +348,8 @@ func TestWeightRoundRobin(t *testing.T) {
 			lookup: func(indexKey string, clientIP net.IP, _ string, _ [][]string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
-					Labels:  map[string]string{"strategy": "roundrobin", "weight-us-0-50": "10.240.0.1", "weight-eu-0-50": "10.240.1.1"},
-					Targets: []string{"10.240.0.1"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy, weightUS0Label: ipv4Target1, weightEU0Label: ipv4Target3},
+					Targets: []string{ipv4Target1},
 				}
 			},
 			rcode: dns.RcodeSuccess,
@@ -354,8 +369,8 @@ func TestWeightRoundRobin(t *testing.T) {
 			lookup: func(indexKey string, clientIP net.IP, _ string, _ [][]string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
-					Labels:  map[string]string{"strategy": "roundrobin", "weight-eu-0-100": "10.240.0.1"},
-					Targets: []string{"10.240.0.1"},
+					Labels:  map[string]string{strategyLabel: roundRobinStrategy, "weight-eu-0-100": ipv4Target1},
+					Targets: []string{ipv4Target1},
 				}
 			},
 			rcode: dns.RcodeServerFailure,
@@ -379,13 +394,13 @@ func TestWeightRoundRobin(t *testing.T) {
 			lookup: func(indexKey string, clientIP net.IP, _ string, _ [][]string) (result k8sctrl.LocalDNSEndpoint) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
-					Labels: map[string]string{"strategy": "roundrobin",
-						"weight-eu-0-50": "10.240.0.1",
-						"weight-eu-1-50": "10.240.0.2",
+					Labels: map[string]string{strategyLabel: roundRobinStrategy,
+						weightEU0Label:   ipv4Target1,
+						weightEU1Label:   ipv4Target2,
 						"weight-eu-2-50": "10.240.0.3",
 						"weight-eu-3-50": "10.240.0.4",
-						"weight-us-0-50": "10.240.1.1"},
-					Targets: []string{"10.240.0.1"},
+						weightUS0Label:   ipv4Target3},
+					Targets: []string{ipv4Target1},
 				}
 			},
 			rcode: dns.RcodeSuccess,
@@ -404,7 +419,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  rs1.labels,
-					Targets: []string{"4001:a1:1014::89", "4001:a1:1014::8a", "4001:a1:1014::ff"},
+					Targets: []string{ipv6Target1, ipv6Target2, ipv6Target4},
 				}
 			},
 			rcode: dns.RcodeSuccess,
@@ -423,7 +438,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  rs4.labels,
-					Targets: []string{"4001:a1:1014::89", "4001:a1:1014::8a", "4001:a1:1014::ff"},
+					Targets: []string{ipv6Target1, ipv6Target2, ipv6Target4},
 				}
 			},
 			rcode: dns.RcodeSuccess,
@@ -442,7 +457,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  rs2.labels,
-					Targets: []string{"4001:a1:1014::89", "4001:a1:1014::8a", "4001:a1:1014::ff"},
+					Targets: []string{ipv6Target1, ipv6Target2, ipv6Target4},
 				}
 			},
 			rcode: dns.RcodeSuccess,
@@ -460,7 +475,7 @@ func TestWeightRoundRobin(t *testing.T) {
 				return k8sctrl.LocalDNSEndpoint{
 					DNSName: host,
 					Labels:  rs3.labels,
-					Targets: []string{"4001:a1:1014::89", "4001:a1:1014::8a", "4001:a1:1014::ff"},
+					Targets: []string{ipv6Target1, ipv6Target2, ipv6Target4},
 				}
 			},
 			rcode: dns.RcodeSuccess,

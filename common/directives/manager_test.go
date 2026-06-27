@@ -77,8 +77,9 @@ func TestRemoving(t *testing.T) {
 
 func TestInserting(t *testing.T) {
 	const (
-		inserted = "inserted"
-		existing = "existing"
+		inserted    = "inserted"
+		existing    = "existing"
+		nonExisting = "nonexisting"
 	)
 	var tests = []struct {
 		name    string
@@ -100,7 +101,7 @@ func TestInserting(t *testing.T) {
 			name:    "InsertBeforeNonExisting",
 			initial: []string{existing},
 			insert:  inserted,
-			before:  "nonexisting",
+			before:  nonExisting,
 			error:   true,
 			final:   []string{existing},
 		},
@@ -108,7 +109,7 @@ func TestInserting(t *testing.T) {
 			name:    "InsertIntoNil",
 			initial: nil,
 			insert:  inserted,
-			before:  "nonexisting",
+			before:  nonExisting,
 			error:   false,
 			final:   []string{inserted},
 		},
@@ -116,7 +117,7 @@ func TestInserting(t *testing.T) {
 			name:    "InsertIntoEmpty",
 			initial: []string{},
 			insert:  inserted,
-			before:  "nonexisting",
+			before:  nonExisting,
 			error:   false,
 			final:   []string{inserted},
 		},

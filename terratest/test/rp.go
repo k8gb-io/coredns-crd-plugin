@@ -32,6 +32,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const coreDNSLabelSelector = "app.kubernetes.io/name=coredns"
+
 // ResourceProvider is reusable class providing basic variables
 type ResourceProvider struct {
 	WrrEndpointPath string
@@ -71,7 +73,7 @@ func NewResourceProvider(t *testing.T) *ResourceProvider {
 	rp.TestOptions = k8s.NewKubectlOptions("", "", namespaceName)
 	rp.coreDNSOptions = k8s.NewKubectlOptions("", "", "coredns")
 	rp.coreDNSPodFiler = metav1.ListOptions{
-		LabelSelector: "app.kubernetes.io/name=coredns",
+		LabelSelector: coreDNSLabelSelector,
 	}
 	return rp
 }
@@ -80,7 +82,7 @@ func (rp *ResourceProvider) GetCoreDNSPod() (*corev1.Pod, error) {
 	coreDNSOptions := k8s.NewKubectlOptions("", "", "coredns")
 
 	coreDNSPodFiler := metav1.ListOptions{
-		LabelSelector: "app.kubernetes.io/name=coredns",
+		LabelSelector: coreDNSLabelSelector,
 	}
 
 	coreDNSPods := k8s.ListPods(rp.t, coreDNSOptions, coreDNSPodFiler)
