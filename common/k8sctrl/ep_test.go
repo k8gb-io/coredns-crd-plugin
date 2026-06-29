@@ -150,6 +150,14 @@ func TestExtractGeo(t *testing.T) {
 			expected:   nil,
 		},
 		{
+			name:       "invalid client IP string",
+			clientIP:   "not-an-ip",
+			targets:    []string{endpointUSIP},
+			fieldPaths: [][]string{{geoFieldCountry, geoFieldISOCode}},
+			geoDBPath:  testGeoDBPath,
+			expected:   nil,
+		},
+		{
 			name:       "endpoint IP not in database",
 			clientIP:   clientUSIP,
 			targets:    []string{endpointUSIP, "5.6.7.8"},
