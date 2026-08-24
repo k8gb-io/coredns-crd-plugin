@@ -1,6 +1,6 @@
 module github.com/k8gb-io/coredns-crd-plugin
 
-go 1.26.1
+go 1.26.6
 
 require (
 	github.com/coredns/caddy v1.1.4-0.20250930002214-15135a999495
