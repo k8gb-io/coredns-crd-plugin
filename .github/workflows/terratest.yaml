@@ -21,7 +21,7 @@ env:
 
 jobs:
   skip-check:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     name: Skip the job?
     outputs:
           should_skip: ${{ steps.skip_check.outputs.should_skip }}
@@ -33,7 +33,7 @@ jobs:
         do_not_skip: '["workflow_dispatch", "schedule"]'
 
   terratest:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     env:
       TAG: "ci"
     steps:
