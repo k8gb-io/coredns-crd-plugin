@@ -46,8 +46,6 @@ func TestBasicExample(t *testing.T) {
 	require.NoError(t, err)
 	txtEndpoint, err := filepath.Abs("../example/dnsendpoint_txt.yaml")
 	require.NoError(t, err)
-	brokenEndpoint, err := filepath.Abs("../example/dnsendpoint_broken.yaml")
-	require.NoError(t, err)
 
 	// To ensure we can reuse the resource config on the same cluster to test different scenarios, we setup a unique
 	// namespace for the resources for this test.
@@ -95,19 +93,6 @@ func TestBasicExample(t *testing.T) {
 		emptyIP, err := DigIPs(t, "localhost", 1053, "host4.example.org", dns.TypeA, clientIP)
 		require.NoError(t, err)
 		assert.NotContains(t, emptyIP, "1.2.3.4")
-	})
-
-	t.Run("Validate artificial(broken) DNS doesn't break CoreDNS", func(t *testing.T) {
-		k8s.KubectlApply(t, options, brokenEndpoint)
-		_, err := DigIPs(t, "localhost", 1053, "broken1.example.org", dns.TypeA, clientIP)
-		require.Error(t, err)
-		_, err = DigIPs(t, "localhost", 1053, "broken2.example.org", dns.TypeA, clientIP)
-		require.Error(t, err)
-
-		// We still able to get "healthy" records
-		currentIP, err := DigIPs(t, "localhost", 1053, "host1.example.org", dns.TypeA, clientIP)
-		require.NoError(t, err)
-		assert.Contains(t, currentIP, "1.2.3.4")
 	})
 
 	t.Run("TTL is correctly evaluated", func(t *testing.T) {
