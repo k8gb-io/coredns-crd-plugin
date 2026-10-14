@@ -44,8 +44,6 @@ type ResourceProvider struct {
 
 	TxtEndpointPath string
 
-	BrokenEndpoint string
-
 	TestOptions *k8s.KubectlOptions
 
 	coreDNSOptions *k8s.KubectlOptions
@@ -65,8 +63,6 @@ func NewResourceProvider(t *testing.T) *ResourceProvider {
 	rp.TtlEndpointPath, err = filepath.Abs("../example/dnsendpoint_ttl.yaml")
 	require.NoError(t, err)
 	rp.TxtEndpointPath, err = filepath.Abs("../example/dnsendpoint_txt.yaml")
-	require.NoError(t, err)
-	rp.BrokenEndpoint, err = filepath.Abs("../example/dnsendpoint_broken.yaml")
 	require.NoError(t, err)
 	rp.t = t
 	namespaceName := fmt.Sprintf("coredns-test-%s", strings.ToLower(random.UniqueId()))
