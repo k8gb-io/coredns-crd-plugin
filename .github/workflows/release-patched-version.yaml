@@ -1,0 +1,104 @@
+name: Release patched version
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Upstream release tag
+        required: true
+        default: v0.7.0
+      revision:
+        description: StreamX patch revision (positive integer)
+        required: true
+        default: '1'
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: patched-release-${{ inputs.tag }}-${{ inputs.revision }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out release configuration
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: release-config
+          persist-credentials: false
+
+      - name: Check out upstream release
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: k8gb-io/coredns-crd-plugin
+          ref: refs/tags/${{ inputs.tag }}
+          fetch-depth: 0
+          path: source
+
+      - name: Apply StreamX patch
+        id: patch
+        working-directory: source
+        env:
+          UPSTREAM_TAG: ${{ inputs.tag }}
+          PATCH_REVISION: ${{ inputs.revision }}
+        run: |
+          set -euo pipefail
+          [[ "$PATCH_REVISION" =~ ^[1-9][0-9]*$ ]]
+          patched_tag="${UPSTREAM_TAG}-streamx.${PATCH_REVISION}"
+          git check-ref-format "refs/tags/$patched_tag"
+          # Docker tags allow fewer characters than Git refs.
+          [[ "$patched_tag" =~ ^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$ ]]
+          git remote add fork "https://github.com/${GITHUB_REPOSITORY}.git"
+          existing=$(git ls-remote --tags fork "refs/tags/$patched_tag")
+          if [[ -n "$existing" ]]; then
+            echo "Release tag $patched_tag already exists" >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch fork refs/heads/fix/zone-apex-a-records:refs/remotes/fork/fix/zone-apex-a-records
+          git merge --no-edit fork/fix/zone-apex-a-records
+          echo "tag=$patched_tag" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Go
+        id: go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: source/go.mod
+          cache-dependency-path: source/go.sum
+
+      - name: Test patched source
+        working-directory: source
+        run: go test ./...
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish images
+        uses: docker/build-push-action@v6
+        with:
+          context: source
+          file: release-config/Dockerfile.release
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.patch.outputs.image }}:${{ steps.patch.outputs.tag }}
+          build-args: GO_VERSION=${{ steps.go.outputs.go-version }}
+
+      - name: Tag published source
+        working-directory: source
+        env:
+          PATCHED_TAG: ${{ steps.patch.outputs.tag }}
+        run: |
+          git tag "$PATCHED_TAG"
+          git push fork "refs/tags/$PATCHED_TAG"

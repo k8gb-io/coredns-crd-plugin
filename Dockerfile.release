@@ -1,0 +1,15 @@
+ARG GO_VERSION=1.27.0
+FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+ARG TARGETOS
+ARG TARGETARCH
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -trimpath -ldflags="-s -w" -o /out/coredns ./cmd/coredns.go
+
+FROM gcr.io/distroless/static-debian12:nonroot
+COPY --from=build /out/coredns /coredns
+EXPOSE 53 53/udp
+ENTRYPOINT ["/coredns"]

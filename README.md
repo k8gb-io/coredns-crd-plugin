@@ -141,3 +141,19 @@ returns an empty A answer with SOA authority and `NOERROR`. SOA and NS queries r
 zone metadata responses.
 
 Due to the fact that there is not nice way to discover NS server's own IP to respond to A queries, as a workaround, it's possible to pass the name of the LoadBalancer service used to expose the CoreDNS instance as an environment variable `EXTERNAL_SVC`. If not set, the default fallback value of `external-dns.kube-system` will be used to look up the external IP of the CoreDNS service.
+
+## StreamX patched releases
+
+After merging the release workflow into the default branch, run **Release patched version**
+from GitHub Actions. Supply an upstream tag (for example, `v0.7.0`) and a positive patch
+revision (for example, `1`). The workflow checks out that upstream release, merges
+`fix/zone-apex-a-records` from this fork, runs the Go tests, and publishes Linux AMD64
+and ARM64 images as `ghcr.io/streamx-com/coredns-crd-plugin:v0.7.0-streamx.1`.
+It then creates the matching Git tag pointing to the patched source.
+
+Use a new revision for each release; existing Git tags are rejected. The workflow needs
+permission to publish packages to the fork's GHCR namespace. Set the package visibility
+to public if clusters should pull it without credentials. Image publication and Git tag
+creation are separate operations: if tagging fails after publication, check the published
+image before retrying with a new revision. The existing upstream release workflow is
+not used for these manual releases.
