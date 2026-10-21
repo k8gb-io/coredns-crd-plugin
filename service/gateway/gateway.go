@@ -87,7 +87,7 @@ func (gw *Gateway) ServeDNS(_ context.Context, w dns.ResponseWriter, r *dns.Msg)
 
 	for _, z := range gw.opts.zones {
 		if state.Name() == z { // apex query
-			ret := gw.serveApex(state)
+			ret := gw.serveApex(state, clientIP)
 			return ret, nil
 		}
 		if dns.IsSubDomain(gw.opts.apex+"."+z, state.Name()) {

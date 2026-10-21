@@ -134,4 +134,10 @@ For more details refer to [this CoreDNS doc](https://coredns.io/2017/07/25/compi
 
 ## Notes regarding Zone Apex and NS server resolution
 
+Application A records can use the configured zone apex as well as names below it. For example,
+with `k8s_crd example.com`, a DNSEndpoint for `example.com` resolves using the same target
+selection and TTL as other application records. If no healthy targets are available, the apex
+returns an empty A answer with SOA authority and `NOERROR`. SOA and NS queries retain their
+zone metadata responses.
+
 Due to the fact that there is not nice way to discover NS server's own IP to respond to A queries, as a workaround, it's possible to pass the name of the LoadBalancer service used to expose the CoreDNS instance as an environment variable `EXTERNAL_SVC`. If not set, the default fallback value of `external-dns.kube-system` will be used to look up the external IP of the CoreDNS service.
