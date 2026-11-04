@@ -71,7 +71,11 @@ destroy-local-cluster:
 import-image:
 	k3d image import -c coredns-crd ${IMG}:${TAG}
 
-deploy-app: image import-image
+.PHONY: geodata
+geodata:
+	cd terratest/geogen && go run .
+
+deploy-app: image import-image geodata
 	kubectl config use-context k3d-coredns-crd
 	kubectl apply -f terratest/example/ns.yaml
 	kubectl create -n coredns configmap geodata --from-file terratest/geogen/geoip.mmdb || true

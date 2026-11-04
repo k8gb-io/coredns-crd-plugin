@@ -37,11 +37,31 @@ repository:
       affiliation: Kedify
       social: https://github.com/jkremser
       primary: false
+    - name: Donovan Muller
+      affiliation: Capitec
+      social: https://github.com/donovanmuller
+      primary: false
+    - name: Bradley Andersen
+      affiliation: 0ttl
+      social: https://github.com/elohmrow
+      primary: false
   license:
     url: https://github.com/k8gb-io/coredns-crd-plugin/blob/main/LICENSE
     expression: Apache-2.0
   documentation:
-    security-policy: https://github.com/k8gb-io/k8gb/blob/master/SECURITY.md
+    contributing-guide: https://github.com/k8gb-io/coredns-crd-plugin/blob/main/CONTRIBUTING.md
+    review-policy: https://github.com/k8gb-io/coredns-crd-plugin/blob/main/CONTRIBUTING.md#tests-and-review
+    dependency-management-policy: https://github.com/k8gb-io/coredns-crd-plugin/blob/main/DEPENDENCY.md
+    governance: https://github.com/k8gb-io/k8gb/blob/master/GOVERNANCE.md
+    security-policy: https://github.com/k8gb-io/coredns-crd-plugin/blob/main/SECURITY.md
+  release:
+    automated-pipeline: true
+    distribution-points:
+      - uri: https://github.com/k8gb-io/coredns-crd-plugin/releases
+        comment: Linux release archives, checksums, and release notes.
+      - uri: https://github.com/k8gb-io/coredns-crd-plugin/pkgs/container/k8s_crd
+        comment: Container images at ghcr.io/k8gb-io/k8s_crd.
+    changelog: https://github.com/k8gb-io/coredns-crd-plugin/releases
   security:
     assessments:
       self:
@@ -53,6 +73,19 @@ repository:
           that serves k8gb's DNS answers (its k8s_crd image is the CoreDNS the
           k8gb Helm chart deploys).
     tools:
+      - name: CodeQL
+        type: SAST
+        rulesets:
+          - default
+        integration:
+          adhoc: true
+          ci: true
+          release: false
+        results:
+          ci:
+            name: CodeQL workflow runs
+            location: https://github.com/k8gb-io/coredns-crd-plugin/actions/workflows/codeql.yml
+            predicate-uri: https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html
       - name: OSPS Baseline Scanner
         type: other
         rulesets:

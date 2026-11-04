@@ -1,5 +1,8 @@
 # binaries
 coredns
 
+# Generated integration-test GeoIP data
+terratest/geogen/geoip.mmdb
+
 # dependency charts
 charts/coredns/charts/*.tgz

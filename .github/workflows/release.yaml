@@ -1,4 +1,4 @@
-name: Build and relase image
+name: Build and release image
 
 on:
   push:
@@ -6,16 +6,19 @@ on:
       - "v*"
 
 permissions:
-  contents: write # to create Github Release automatically
-  packages: write # to push to GHCR.io
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-26.04
+    permissions:
+      contents: write # Create the GitHub release
+      packages: write # Push the release images to GHCR
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
+        persist-credentials: false
     - name: Set up Go
       uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
       with:

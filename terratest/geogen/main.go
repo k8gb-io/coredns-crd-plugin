@@ -33,13 +33,22 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	writer, _ := mmdbwriter.New(
+	defer func() {
+		if err := fh.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	writer, err := mmdbwriter.New(
 		mmdbwriter.Options{
 			DatabaseType: "Test-IP-DB",
+			BuildEpoch:   1, // Fixed metadata keeps the generated fixture reproducible.
 			RecordSize:   24,
 			IPVersion:    4,
 		},
 	)
+	if err != nil {
+		log.Fatal(err)
+	}
 	_, absaSDCNet, _ := net.ParseCIDR("192.200.1.0/24")
 	_, absa270Net, _ := net.ParseCIDR("192.200.2.0/24")
 
