@@ -1,6 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:base"],
+  "ignoreDeps": [
+    // grc.store accepts results only when publish.yml is called by its v1 tag,
+    // so it must not be pinned to a digest (see publish-to-grc-store.yml).
+    "revanite-io/pvtr-publish-results"
+  ],
   "labels": ["dependencies", "renovate"],
   "prConcurrentLimit": 15, 
   "packageRules": [

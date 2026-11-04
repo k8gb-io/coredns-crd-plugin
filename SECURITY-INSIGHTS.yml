@@ -1,0 +1,72 @@
+---
+header:
+  schema-version: 2.2.0
+  last-updated: '2026-11-04'
+  last-reviewed: '2026-11-04'
+  url: https://raw.githubusercontent.com/k8gb-io/coredns-crd-plugin/main/SECURITY-INSIGHTS.yml
+  project-si-source: https://raw.githubusercontent.com/k8gb-io/k8gb/master/SECURITY-INSIGHTS.yml
+  comment: |
+    Repository-level Security Insights for coredns-crd-plugin. Project-wide
+    information (administrators, repositories, vulnerability reporting) comes
+    from the k8gb project file through project-si-source.
+
+repository:
+  url: https://github.com/k8gb-io/coredns-crd-plugin
+  status: active
+  accepts-change-request: true
+  accepts-automated-change-request: true
+  bug-fixes-only: false
+  core-team:
+    - name: Yury Tsarev
+      affiliation: 0ttl
+      social: https://github.com/ytsarev
+      primary: true
+    - name: Dinar Valeev
+      affiliation: Absa Group Ltd
+      social: https://github.com/k0da
+      primary: false
+    - name: Michal Kuritka
+      affiliation: Absa Group Ltd
+      social: https://github.com/kuritka
+      primary: false
+    - name: André Águas
+      affiliation: Open Systems
+      social: https://github.com/abaguas
+      primary: false
+    - name: Jirka Kremser
+      affiliation: Kedify
+      social: https://github.com/jkremser
+      primary: false
+  license:
+    url: https://github.com/k8gb-io/coredns-crd-plugin/blob/main/LICENSE
+    expression: Apache-2.0
+  documentation:
+    security-policy: https://github.com/k8gb-io/k8gb/blob/master/SECURITY.md
+  security:
+    assessments:
+      self:
+        name: k8gb security self-assessment
+        evidence: https://github.com/k8gb-io/k8gb/blob/master/self-assessment.md
+        date: '2026-10-31'
+        comment: |
+          The k8gb self-assessment covers this plugin as the embedded CoreDNS
+          that serves k8gb's DNS answers (its k8s_crd image is the CoreDNS the
+          k8gb Helm chart deploys).
+    tools:
+      - name: OSPS Baseline Scanner
+        type: other
+        rulesets:
+          - osps-baseline
+        integration:
+          adhoc: true
+          ci: true
+          release: false
+        results:
+          ci:
+            name: OSPS Baseline workflow runs
+            location: https://github.com/k8gb-io/coredns-crd-plugin/actions/workflows/publish-to-grc-store.yml
+            predicate-uri: https://github.com/revanite-io/pvtr-publish-results
+        comment: |
+          Scans the repository against the OSPS Baseline at Maturity Level 2
+          weekly and on demand, and publishes each signed result to
+          https://grc.store/targets/k8gb-io/coredns-crd-plugin.
