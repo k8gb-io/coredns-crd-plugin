@@ -40,8 +40,8 @@ import (
 //   192.201.0.3 → JP (country: JP, continent: AS, city: Tokyo)
 
 func TestExtractGeo(t *testing.T) {
+	testGeoDBPath := createTestGeoDB(t)
 	const (
-		testGeoDBPath     = "testdata/test-geoip.mmdb"
 		clientUSIP        = "192.201.0.1"
 		clientUKIP        = "192.201.0.2"
 		endpointUSIP      = "192.200.0.1"

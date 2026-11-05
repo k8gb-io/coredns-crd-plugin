@@ -12,9 +12,10 @@ This plugin relies on it's own connection to the k8s API server and doesn't shar
 
 | Kind | Matching Against | External IPs are from |
 | ---- | ---------------- | -------- |
-| DNSEndpoint | all FQDNs from `spec.endpoints.dnszone` matching configured zones | `.spec.endpoints.dnszone.targets` |
+| DNSEndpoint | FQDNs from `.spec.endpoints[].dnsName` matching configured zones | `.spec.endpoints[].targets` |
 
-Currently only supports A-type queries, all other queries result in NODATA responses.
+Supports A and TXT queries, plus zone-apex SOA and NS responses. Other query
+types can return NODATA responses.
 
 This plugin is **NOT** supposed to be used for intra-cluster DNS resolution and does not contain the default upstream [kubernetes](https://coredns.io/plugins/kubernetes/) plugin.
 
@@ -108,6 +109,12 @@ For more information about balancing, please visit our [go-weight-shuffling](htt
 ) module.
 
 ## Build
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for toolchain requirements, a build from
+a fresh checkout, tests, defect reporting, and review requirements. See
+[ARCHITECTURE.md](ARCHITECTURE.md) for component and interface documentation,
+[DEPENDENCY.md](DEPENDENCY.md) for dependency management, and
+[SECURITY.md](SECURITY.md) for private vulnerability reporting and security updates.
 
 ### With compile-time configuration file
 

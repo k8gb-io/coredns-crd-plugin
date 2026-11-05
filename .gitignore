@@ -1,5 +1,8 @@
 # binaries
 coredns
 
+# Generated GeoIP test data, including when the generator runs from the root
+*.mmdb
+
 # dependency charts
 charts/coredns/charts/*.tgz
