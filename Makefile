@@ -79,7 +79,7 @@ deploy-app: image import-image geodata
 	kubectl config use-context k3d-coredns-crd
 	kubectl apply -f terratest/example/ns.yaml
 	kubectl create -n coredns configmap geodata --from-file terratest/geogen/geoip.mmdb || true
-	kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/external-dns/refs/heads/master/charts/external-dns/crds/dnsendpoints.externaldns.k8s.io.yaml
+	kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/external-dns/v0.24.0/charts/external-dns/crds/dnsendpoints.externaldns.k8s.io.yaml
 	helm repo add coredns https://coredns.github.io/helm
 	helm repo update
 	cd charts/coredns && helm dependency update

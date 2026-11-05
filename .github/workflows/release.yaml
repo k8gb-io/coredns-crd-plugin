@@ -9,7 +9,23 @@ permissions:
   contents: read
 
 jobs:
+  verify:
+    runs-on: ubuntu-26.04
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 0
+        ref: ${{ github.sha }}
+        persist-credentials: false
+    - name: Verify tagged commit belongs to main
+      run: |
+        if ! git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main; then
+          echo "::error::Release tags must point to commits already on main."
+          exit 1
+        fi
+
   build:
+    needs: verify
     runs-on: ubuntu-26.04
     permissions:
       contents: write # Create the GitHub release
@@ -18,6 +34,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
+        ref: ${{ github.sha }}
         persist-credentials: false
     - name: Set up Go
       uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -32,8 +49,7 @@ jobs:
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
       with:
-        version: latest
+        version: v2.20.0
         args: release --clean
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        DOCKER_CLI_EXPERIMENTAL: "enabled"

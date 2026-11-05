@@ -23,22 +23,22 @@ completion is claimed. Its token permissions differ from the workflow job token.
    on every pull request. Confirm `lint`, `terratest`, `Analyze (go)`, `CodeQL`,
    and `DCO` report successfully. In particular, verify the CodeQL result check
    is emitted before requiring it.
-2. Enable private vulnerability reporting, secret scanning, and secret scanning
-   push protection in repository settings. Set Actions' default token to read
-   and disable Actions approving pull requests. Keep release write permissions
-   scoped to the release job.
-3. Apply [main-ruleset.json](main-ruleset.json) after the workflow changes land:
+2. **Done (2026-11-04):** private vulnerability reporting, secret scanning and
+   push protection are enabled; Actions defaults to read-only and cannot approve
+   pull requests. Keep release write permissions scoped to the release job.
+3. The staged `main protection` ruleset (ID `26573234`) is active with one
+   approval, resolved conversations, DCO, deletion protection, force-push
+   protection and no bypass actors. Classic protection was removed after
+   equivalent ruleset enforcement was verified. After the workflow changes land,
+   update it with the full CI requirements in [main-ruleset.json](main-ruleset.json):
 
    ```sh
-   gh api repos/k8gb-io/coredns-crd-plugin/rulesets \
-     --method POST --input .github/main-ruleset.json
+   gh api repos/k8gb-io/coredns-crd-plugin/rulesets/26573234 \
+     --method PUT --input .github/main-ruleset.json
    ```
 
-   Inspect existing rulesets first. To update an existing `main protection`
-   ruleset, use `--method PUT` with `/rulesets/<id>` instead. Keep existing
-   classic branch protection until equivalent enforcement has been verified.
-   The ruleset blocks deletion and force pushes, requires a review from someone
-   other than the author, and requires the listed checks without bypass actors.
+   Confirm the ruleset ID and current settings before updating it. Require all
+   five check contexts only once their workflows are on `main`.
 4. A grc.store namespace administrator must add this repository as a trusted
    publisher in `k8gb-io`, restricted to `refs/heads/main`. This cannot be
    configured by a repository file or GitHub's repository settings.
@@ -52,6 +52,24 @@ The workflow's `osps-baseline` alias follows the scanner's latest bundled catalo
 The original Slam work plan specifies catalog 2026-08-28; record the actual
 catalog in completion evidence and verify the event's accepted version if the
 alias advances. The workflow needs no privileged personal access token.
+
+## Release tags
+
+[release-tags-ruleset.json](release-tags-ruleset.json) restricts creation,
+updates and deletion of `v*` tags to repository administrators. Its bypass actor
+is repository role `5` (admin). Import it as a separate tag ruleset:
+
+```sh
+gh api repos/k8gb-io/coredns-crd-plugin/rulesets \
+  --method POST --input .github/release-tags-ruleset.json
+```
+
+Inspect existing rulesets first and use PUT with the existing ID when updating
+this rule. Admin-controlled tags remain a trusted release input. The
+[release workflow](workflows/release.yaml) additionally checks that the tagged
+commit is an ancestor of `main` in a read-only job before the job with release
+and package write permissions starts. Both jobs check out the event's immutable
+SHA. GoReleaser is pinned to v2.20.0 and its configuration is checked by PR CI.
 
 ## Review evidence and remaining work
 

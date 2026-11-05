@@ -1,0 +1,5 @@
+FROM gcr.io/distroless/static-debian12:nonroot
+ARG TARGETPLATFORM
+COPY $TARGETPLATFORM/coredns /
+EXPOSE 53 53/udp
+ENTRYPOINT ["/coredns"]

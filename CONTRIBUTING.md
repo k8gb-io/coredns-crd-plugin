@@ -71,11 +71,18 @@ documentation when a change affects them.
 
 [DEPENDENCY.md](DEPENDENCY.md) describes dependency acquisition and updates.
 The [release workflow](.github/workflows/release.yaml) invokes GoReleaser on
-maintainer-created `v*` tags. [.goreleaser.yml](.goreleaser.yml) defines Linux
+administrator-created `v*` tags whose commits are already on `main`. A separate
+read-only job checks ancestry before the publishing job starts. The proposed
+[release tag ruleset](.github/release-tags-ruleset.json) restricts tag creation,
+updates and deletion to administrators. [.goreleaser.yml](.goreleaser.yml) defines Linux
 amd64/arm64 builds, checksums, release notes, and GHCR image manifests.
 Release archives and checksums are published under
 [GitHub Releases](https://github.com/k8gb-io/coredns-crd-plugin/releases), and
-images under `ghcr.io/k8gb-io/k8s_crd`.
+images under `ghcr.io/k8gb-io/k8s_crd`. The pinned GoReleaser v2.20.0 uses
+[Dockerfile.release](Dockerfile.release) for the multiarchitecture image and
+the existing `-amd64` and `-arm64` image tags; [Dockerfile](Dockerfile) is used
+for local and integration builds. Neither path publishes release signatures or
+provenance attestations.
 
 Download the checksum file and archive from the same release, then verify the
 archive with `sha256sum --check checksums.txt` (or `shasum -a 256 --check

@@ -55,6 +55,10 @@ and run lint, unit tests, integration tests, and CodeQL. They do not publish
 releases. CodeQL's analysis job additionally writes code scanning results.
 [release.yaml](.github/workflows/release.yaml) runs on `v*` tag pushes and grants
 only its release job permission to create releases and publish GHCR packages.
+A separate read-only job verifies the tagged commit belongs to `main` before
+the release job starts; both checkouts use the event SHA. The proposed
+[release tag ruleset](.github/release-tags-ruleset.json) restricts `v*` tag
+creation, updates and deletion to repository administrators.
 Tag creation and changes to this workflow are privileged maintainer actions.
 Review workflow triggers, token permissions, checkout references, and third-party
 action changes whenever this boundary changes.
